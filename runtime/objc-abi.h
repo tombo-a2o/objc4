@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2009 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -25,9 +25,9 @@
 #ifndef _OBJC_ABI_H
 #define _OBJC_ABI_H
 
-/* 
+/*
  * WARNING  DANGER  HAZARD  BEWARE  EEK
- * 
+ *
  * Everything in this file is for Apple Internal use only.
  * These will change in arbitrary OS updates and in unpredictable ways.
  * When your program breaks, you get to keep both pieces.
@@ -37,7 +37,8 @@
  * objc-abi.h: Declarations for functions used by compiler codegen.
  */
 
-#include <malloc/malloc.h>
+ //#include <malloc/malloc.h>
+#include <malloc.h>
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <objc/message.h>
@@ -87,7 +88,7 @@ OBJC_EXPORT void objc_setProperty_nonatomic_copy(id self, SEL _cmd, id newValue,
     OBJC_GC_UNAVAILABLE;
 
 
-// Read or write a non-object property. Not all uses are C structs, 
+// Read or write a non-object property. Not all uses are C structs,
 // and not all C struct properties use this.
 OBJC_EXPORT void objc_copyStruct(void *dest, const void *src, ptrdiff_t size, BOOL atomic, BOOL hasStrong)
     __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
@@ -121,8 +122,8 @@ OBJC_EXPORT id objc_msgSend_noarg(id self, SEL _cmd)
 #endif
 
 #if __OBJC2__
-// Debug messengers. Messengers used by the compiler have a debug flavor that 
-// may perform extra sanity checking. 
+// Debug messengers. Messengers used by the compiler have a debug flavor that
+// may perform extra sanity checking.
 // Old objc_msgSendSuper() does not have a debug version; this is OBJC2 only.
 // *_fixup() do not have debug versions; use non-fixup only for debug mode.
 OBJC_EXPORT id objc_msgSend_debug(id self, SEL op, ...)

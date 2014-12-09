@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 1999-2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 /***********************************************************************
@@ -57,7 +57,7 @@ struct option_t {
 };
 
 const option_t Settings[] = {
-#define OPTION(var, env, help) option_t{&var, #env, help, strlen(#env)}, 
+#define OPTION(var, env, help) {&var, #env, help, strlen(#env)},
 #include "objc-env.h"
 #undef OPTION
 };
@@ -99,7 +99,7 @@ uint32_t AppSDKVersion = 0;
 
 /***********************************************************************
 * objc_getClass.  Return the id of the named class.  If the class does
-* not exist, call _objc_classLoader and then objc_classHandler, either of 
+* not exist, call _objc_classLoader and then objc_classHandler, either of
 * which may create a new class.
 * Warning: doesn't work if aClassName is the name of a posed-for class's isa!
 **********************************************************************/
@@ -113,9 +113,9 @@ Class objc_getClass(const char *aClassName)
 
 
 /***********************************************************************
-* objc_getRequiredClass.  
-* Same as objc_getClass, but kills the process if the class is not found. 
-* This is used by ZeroLink, where failing to find a class would be a 
+* objc_getRequiredClass.
+* Same as objc_getClass, but kills the process if the class is not found.
+* This is used by ZeroLink, where failing to find a class would be a
 * compile-time link error without ZeroLink.
 **********************************************************************/
 Class objc_getRequiredClass(const char *aClassName)
@@ -128,7 +128,7 @@ Class objc_getRequiredClass(const char *aClassName)
 
 /***********************************************************************
 * objc_lookUpClass.  Return the id of the named class.
-* If the class does not exist, call _objc_classLoader, which may create 
+* If the class does not exist, call _objc_classLoader, which may create
 * a new class.
 *
 * Formerly objc_getClassWithoutWarning ()
@@ -164,11 +164,11 @@ Class objc_getMetaClass(const char *aClassName)
 
 
 /***********************************************************************
-* appendHeader.  Add a newly-constructed header_info to the list. 
+* appendHeader.  Add a newly-constructed header_info to the list.
 **********************************************************************/
 void appendHeader(header_info *hi)
 {
-    // Add the header to the header list. 
+    // Add the header to the header list.
     // The header is appended to the list, to preserve the bottom-up order.
     HeaderCount++;
     hi->next = NULL;
@@ -191,8 +191,8 @@ void appendHeader(header_info *hi)
 /***********************************************************************
 * removeHeader
 * Remove the given header from the header list.
-* FirstHeader is updated. 
-* LastHeader is set to NULL. Any code that uses LastHeader must 
+* FirstHeader is updated.
+* LastHeader is set to NULL. Any code that uses LastHeader must
 * detect this NULL and recompute LastHeader by traversing the list.
 **********************************************************************/
 void removeHeader(header_info *hi)
@@ -205,7 +205,7 @@ void removeHeader(header_info *hi)
 
             // Remove from the linked list (updating FirstHeader if necessary).
             *hiP = (**hiP).next;
-            
+
             // Update LastHeader if necessary.
             if (LastHeader == deadHead) {
                 LastHeader = NULL;  // will be recomputed next time it's used
@@ -223,13 +223,14 @@ void removeHeader(header_info *hi)
 * Read environment variables that affect the runtime.
 * Also print environment variable help, if requested.
 **********************************************************************/
-void environ_init(void) 
+void environ_init(void)
 {
+#if !TARGET_OS_EMSCRIPTEN
     if (issetugid()) {
         // All environment variables are silently ignored when setuid or setgid
         // This includes OBJC_HELP and OBJC_PRINT_OPTIONS themselves.
         return;
-    } 
+    }
 
     bool PrintHelp = false;
     bool PrintOptions = false;
@@ -238,7 +239,7 @@ void environ_init(void)
     // This optimizes the case where none are set.
     for (char **p = *_NSGetEnviron(); *p != nil; p++) {
         if (0 != strncmp(*p, "OBJC_", 5)) continue;
-        
+
         if (0 == strncmp(*p, "OBJC_HELP=", 10)) {
             PrintHelp = true;
             continue;
@@ -247,20 +248,20 @@ void environ_init(void)
             PrintOptions = true;
             continue;
         }
-        
+
         const char *value = strchr(*p, '=');
         if (!*value) continue;
         value++;
-        
+
         for (size_t i = 0; i < sizeof(Settings)/sizeof(Settings[0]); i++) {
             const option_t *opt = &Settings[i];
-            if ((size_t)(value - *p) == 1+opt->envlen  &&  
+            if ((size_t)(value - *p) == 1+opt->envlen  &&
                 0 == strncmp(*p, opt->env, opt->envlen))
             {
                 *opt->var = (0 == strcmp(value, "YES"));
                 break;
             }
-        }            
+        }
     }
 
     // Print OBJC_HELP and OBJC_PRINT_OPTIONS output.
@@ -278,11 +279,12 @@ void environ_init(void)
         }
 
         for (size_t i = 0; i < sizeof(Settings)/sizeof(Settings[0]); i++) {
-            const option_t *opt = &Settings[i];            
+            const option_t *opt = &Settings[i];
             if (PrintHelp) _objc_inform("%s: %s", opt->env, opt->help);
             if (PrintOptions && *opt->var) _objc_inform("%s is set", opt->env);
         }
     }
+#endif
 }
 
 
@@ -290,9 +292,9 @@ void environ_init(void)
 * logReplacedMethod
 * OBJC_PRINT_REPLACED_METHODS implementation
 **********************************************************************/
-void 
-logReplacedMethod(const char *className, SEL s, 
-                  BOOL isMeta, const char *catName, 
+void
+logReplacedMethod(const char *className, SEL s,
+                  BOOL isMeta, const char *catName,
                   IMP oldImp, IMP newImp)
 {
     const char *oldImage = "??";
@@ -309,10 +311,10 @@ logReplacedMethod(const char *className, SEL s,
     if (dladdr((void*)oldImp, &dl)  &&  dl.dli_fname) oldImage = dl.dli_fname;
     if (dladdr((void*)newImp, &dl)  &&  dl.dli_fname) newImage = dl.dli_fname;
 #endif
-    
+
     _objc_inform("REPLACED: %c[%s %s]  %s%s  (IMP was %p (%s), now %p (%s))",
-                 isMeta ? '+' : '-', className, sel_getName(s), 
-                 catName ? "by category " : "", catName ? catName : "", 
+                 isMeta ? '+' : '-', className, sel_getName(s),
+                 catName ? "by category " : "", catName ? catName : "",
                  oldImp, oldImage, newImp, newImage);
 }
 
@@ -365,7 +367,7 @@ void _objc_pthread_destroyspecific(void *arg)
         _destroyAltHandlerList(data->handlerList);
         for (int i = 0; i < (int)countof(data->printableNames); i++) {
             if (data->printableNames[i]) {
-                free(data->printableNames[i]);  
+                free(data->printableNames[i]);
             }
         }
 
@@ -389,8 +391,8 @@ void tls_init(void)
 
 /***********************************************************************
 * _objcInit
-* Former library initializer. This function is now merely a placeholder 
-* for external callers. All runtime initialization has now been moved 
+* Former library initializer. This function is now merely a placeholder
+* for external callers. All runtime initialization has now been moved
 * to map_images() and _objc_init.
 **********************************************************************/
 void _objcInit(void)
@@ -412,19 +414,19 @@ void *_objc_forward_stret_handler = nil;
 #else
 
 // Default forward handler halts the process.
-__attribute__((noreturn)) void 
+__attribute__((noreturn)) void
 objc_defaultForwardHandler(id self, SEL sel)
 {
     _objc_fatal("%c[%s %s]: unrecognized selector sent to instance %p "
-                "(no message forward handler is installed)", 
-                class_isMetaClass(object_getClass(self)) ? '+' : '-', 
+                "(no message forward handler is installed)",
+                class_isMetaClass(object_getClass(self)) ? '+' : '-',
                 object_getClassName(self), sel_getName(sel), self);
 }
 void *_objc_forward_handler = (void*)objc_defaultForwardHandler;
 
 #if SUPPORT_STRET
 struct stret { int i[100]; };
-__attribute__((noreturn)) struct stret 
+__attribute__((noreturn)) struct stret
 objc_defaultForwardStretHandler(id self, SEL sel)
 {
     objc_defaultForwardHandler(self, sel);
@@ -464,7 +466,7 @@ const char *class_getImageName(Class cls)
 #if TARGET_OS_WIN32
     charactersCopied = 0;
     szFileName = malloc(MAX_PATH * sizeof(TCHAR));
-    
+
     origCls = objc_getOrigClass(cls->demangledName());
     classModule = NULL;
     res = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCTSTR)origCls, &classModule);
@@ -477,6 +479,9 @@ const char *class_getImageName(Class cls)
     } else {
         free(szFileName);
     }
+    return NULL;
+#elif TARGET_OS_EMSCRIPTEN
+#warning "null"
     return NULL;
 #else
     return dyld_image_path_containing_address(cls);
@@ -494,7 +499,7 @@ const char **objc_copyImageNames(unsigned int *outCount)
 #else
     const char **names = (const char **)calloc(max+1, sizeof(char *));
 #endif
-    
+
     for (hi = FirstHeader; hi != NULL && count < max; hi = hi->next) {
 #if TARGET_OS_WIN32
         if (hi->moduleName) {
@@ -507,7 +512,7 @@ const char **objc_copyImageNames(unsigned int *outCount)
 #endif
     }
     names[count] = NULL;
-    
+
     if (count == 0) {
         // Return NULL instead of empty list if there are no images
         free((void *)names);
@@ -522,7 +527,7 @@ const char **objc_copyImageNames(unsigned int *outCount)
 /**********************************************************************
 *
 **********************************************************************/
-const char ** 
+const char **
 objc_copyClassNamesForImage(const char *image, unsigned int *outCount)
 {
     header_info *hi;
@@ -540,7 +545,7 @@ objc_copyClassNamesForImage(const char *image, unsigned int *outCount)
         if (0 == strcmp(image, hi->fname)) break;
 #endif
     }
-    
+
     if (!hi) {
         if (outCount) *outCount = 0;
         return NULL;
@@ -548,7 +553,7 @@ objc_copyClassNamesForImage(const char *image, unsigned int *outCount)
 
     return _objc_copyClassNamesForImage(hi, outCount);
 }
-	
+
 
 /**********************************************************************
 * Fast Enumeration Support
@@ -604,20 +609,20 @@ void objc_setAssociatedObject_gc(id object, const void *key, id value, objc_Asso
     auto_zone_set_associative_ref(gc_zone, object, (void *)key, value);
 }
 
-// objc_setAssociatedObject and objc_getAssociatedObject are 
+// objc_setAssociatedObject and objc_getAssociatedObject are
 // resolver functions in objc-auto.mm.
 
 #else
 
-id 
-objc_getAssociatedObject(id object, const void *key) 
+id
+objc_getAssociatedObject(id object, const void *key)
 {
     return objc_getAssociatedObject_non_gc(object, key);
 }
 
-void 
-objc_setAssociatedObject(id object, const void *key, id value, 
-                         objc_AssociationPolicy policy) 
+void
+objc_setAssociatedObject(id object, const void *key, id value,
+                         objc_AssociationPolicy policy)
 {
     objc_setAssociatedObject_non_gc(object, key, value, policy);
 }
@@ -625,12 +630,12 @@ objc_setAssociatedObject(id object, const void *key, id value,
 #endif
 
 
-void objc_removeAssociatedObjects(id object) 
+void objc_removeAssociatedObjects(id object)
 {
 #if SUPPORT_GC
     if (UseGC) {
         auto_zone_erase_associative_refs(gc_zone, object);
-    } else 
+    } else
 #endif
     {
         if (object && object->hasAssociatedObjects()) {
@@ -638,4 +643,3 @@ void objc_removeAssociatedObjects(id object)
         }
     }
 }
-

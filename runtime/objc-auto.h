@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2007 Apple Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -27,17 +27,17 @@
 #pragma GCC system_header
 
 #include <objc/objc.h>
-#include <malloc/malloc.h>
+#include <malloc.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
 #include <Availability.h>
 #include <TargetConditionals.h>
 
-#if !TARGET_OS_WIN32
+#if TARGET_OS_MAC
 #include <sys/types.h>
 #include <libkern/OSAtomic.h>
-#else
+#elif TARGET_OS_WIN32
 #   define WINVER 0x0501		// target Windows XP and later
 #   define _WIN32_WINNT 0x0501	// target Windows XP and later
 #   define WIN32_LEAN_AND_MEAN
@@ -45,12 +45,16 @@
 #   define BOOL WINBOOL
 #   include <windows.h>
 #   undef BOOL
+#elif TARGET_OS_EMSCRIPTEN
+#warning "not implemented yet"
+#else
+#error "unkonwo"
 #endif
 
 
 /* GC is unsupported on some architectures. */
 
-#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32
+#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32 || TARGET_OS_EMSCRIPTEN
 #   define OBJC_NO_GC 1
 #endif
 
@@ -62,7 +66,7 @@ enum {
     OBJC_GENERATIONAL_COLLECTION = (1 << 0),  // run fast incremental collection
     OBJC_FULL_COLLECTION         = (2 << 0),  // run full collection.
     OBJC_EXHAUSTIVE_COLLECTION   = (3 << 0),  // run full collections until memory available stops improving
-    
+
     OBJC_COLLECT_IF_NEEDED       = (1 << 3), // run collection only if needed (allocation threshold exceeded)
     OBJC_WAIT_UNTIL_DONE         = (1 << 4), // wait (when possible) for collection to end before returning (when collector is running on dedicated thread)
 };
@@ -83,7 +87,7 @@ OBJC_EXPORT void objc_collect(unsigned long options)
     __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_NA);
 OBJC_EXPORT BOOL objc_collectingEnabled(void)
     __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_NA);
-OBJC_EXPORT malloc_zone_t *objc_collectableZone(void) 
+OBJC_EXPORT malloc_zone_t *objc_collectableZone(void)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_NA);
 
 /* GC configuration */
@@ -96,15 +100,15 @@ OBJC_EXPORT void objc_setCollectionThreshold(size_t threshold)
 OBJC_EXPORT void objc_setCollectionRatio(size_t ratio)
     __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_NA);
 
-// 
+//
 // GC-safe compare-and-swap
 //
 
 /* Atomic update, with write barrier. */
-OBJC_EXPORT BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation) 
+OBJC_EXPORT BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation)
     __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_NA) OBJC_ARC_UNAVAILABLE;
 /* "Barrier" version also includes memory barrier. */
-OBJC_EXPORT BOOL objc_atomicCompareAndSwapPtrBarrier(id predicate, id replacement, volatile id *objectLocation) 
+OBJC_EXPORT BOOL objc_atomicCompareAndSwapPtrBarrier(id predicate, id replacement, volatile id *objectLocation)
     __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_NA) OBJC_ARC_UNAVAILABLE;
 
 // atomic update of a global variable
@@ -119,9 +123,9 @@ OBJC_EXPORT BOOL objc_atomicCompareAndSwapInstanceVariableBarrier(id predicate, 
     __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_NA) OBJC_ARC_UNAVAILABLE;
 
 
-// 
+//
 // Read and write barriers
-// 
+//
 
 OBJC_EXPORT id objc_assign_strongCast(id val, id *dest)
     __OSX_AVAILABLE_STARTING(__MAC_10_4, __IPHONE_NA);
@@ -142,13 +146,13 @@ OBJC_EXPORT id objc_assign_weak(id value, id *location)
 
 //
 // Thread management
-// 
+//
 
 /* Register the calling thread with the garbage collector. */
 OBJC_EXPORT void objc_registerThreadWithCollector(void)
     __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_NA);
 
-/* Unregisters the calling thread with the garbage collector. 
+/* Unregisters the calling thread with the garbage collector.
    Unregistration also happens automatically at thread exit. */
 OBJC_EXPORT void objc_unregisterThreadWithCollector(void)
     __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_NA);
@@ -165,7 +169,7 @@ OBJC_EXPORT void objc_clear_stack(unsigned long options)
 
 //
 // Finalization
-// 
+//
 
 /* Returns true if object has been scheduled for finalization.  Can be used to avoid operations that may lead to resurrection, which are fatal. */
 OBJC_EXPORT BOOL objc_is_finalized(void *ptr)
@@ -177,7 +181,7 @@ OBJC_EXPORT void objc_finalizeOnMainThread(Class cls)
 
 
 //
-// Deprecated names. 
+// Deprecated names.
 //
 
 /* Deprecated. Use objc_collectingEnabled() instead. */
@@ -222,51 +226,51 @@ static OBJC_INLINE void objc_startCollectorThread(void) { }
 #else
 
 #if TARGET_OS_WIN32
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation)
     { void *original = InterlockedCompareExchangePointer((void * volatile *)objectLocation, (void *)replacement, (void *)predicate); return (original == predicate); }
 
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtrBarrier(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtrBarrier(id predicate, id replacement, volatile id *objectLocation)
     { void *original = InterlockedCompareExchangePointer((void * volatile *)objectLocation, (void *)replacement, (void *)predicate); return (original == predicate); }
 #else
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation)
     { return OSAtomicCompareAndSwapPtr((void *)predicate, (void *)replacement, (void * volatile *)objectLocation); }
 
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtrBarrier(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapPtrBarrier(id predicate, id replacement, volatile id *objectLocation)
     { return OSAtomicCompareAndSwapPtrBarrier((void *)predicate, (void *)replacement, (void * volatile *)objectLocation); }
 #endif
 
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapGlobal(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapGlobal(id predicate, id replacement, volatile id *objectLocation)
     { return objc_atomicCompareAndSwapPtr(predicate, replacement, objectLocation); }
 
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapGlobalBarrier(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapGlobalBarrier(id predicate, id replacement, volatile id *objectLocation)
     { return objc_atomicCompareAndSwapPtrBarrier(predicate, replacement, objectLocation); }
 
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapInstanceVariable(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapInstanceVariable(id predicate, id replacement, volatile id *objectLocation)
     { return objc_atomicCompareAndSwapPtr(predicate, replacement, objectLocation); }
 
-static OBJC_INLINE BOOL objc_atomicCompareAndSwapInstanceVariableBarrier(id predicate, id replacement, volatile id *objectLocation) 
+static OBJC_INLINE BOOL objc_atomicCompareAndSwapInstanceVariableBarrier(id predicate, id replacement, volatile id *objectLocation)
     { return objc_atomicCompareAndSwapPtrBarrier(predicate, replacement, objectLocation); }
 
 
-static OBJC_INLINE id objc_assign_strongCast(id val, id *dest) 
+static OBJC_INLINE id objc_assign_strongCast(id val, id *dest)
     { return (*dest = val); }
 
-static OBJC_INLINE id objc_assign_global(id val, id *dest) 
+static OBJC_INLINE id objc_assign_global(id val, id *dest)
     { return (*dest = val); }
 
-static OBJC_INLINE id objc_assign_ivar(id val, id dest, ptrdiff_t offset) 
+static OBJC_INLINE id objc_assign_ivar(id val, id dest, ptrdiff_t offset)
     { return (*(id*)((char *)dest+offset) = val); }
 
-static OBJC_INLINE id objc_read_weak(id *location) 
+static OBJC_INLINE id objc_read_weak(id *location)
     { return *location; }
 
-static OBJC_INLINE id objc_assign_weak(id value, id *location) 
+static OBJC_INLINE id objc_assign_weak(id value, id *location)
     { return (*location = value); }
 
 /* MRC */
 #endif
 
-static OBJC_INLINE void *objc_memmove_collectable(void *dst, const void *src, size_t size) 
+static OBJC_INLINE void *objc_memmove_collectable(void *dst, const void *src, size_t size)
     { return memmove(dst, src, size); }
 
 static OBJC_INLINE void objc_finalizeOnMainThread(Class cls __unused) { }
@@ -274,8 +278,8 @@ static OBJC_INLINE BOOL objc_is_finalized(void *ptr __unused) { return NO; }
 static OBJC_INLINE void objc_clear_stack(unsigned long options __unused) { }
 
 static OBJC_INLINE BOOL objc_collecting_enabled(void) { return NO; }
-static OBJC_INLINE void objc_set_collection_threshold(size_t threshold __unused) { } 
-static OBJC_INLINE void objc_set_collection_ratio(size_t ratio __unused) { } 
+static OBJC_INLINE void objc_set_collection_threshold(size_t threshold __unused) { }
+static OBJC_INLINE void objc_set_collection_ratio(size_t ratio __unused) { }
 static OBJC_INLINE void objc_start_collector_thread(void) { }
 
 #if __has_feature(objc_arc)
@@ -283,7 +287,7 @@ extern id objc_allocate_object(Class cls, int extra) UNAVAILABLE_ATTRIBUTE;
 #else
 OBJC_EXPORT id class_createInstance(Class cls, size_t extraBytes)
     __OSX_AVAILABLE_STARTING(__MAC_10_0, __IPHONE_2_0);
-static OBJC_INLINE id objc_allocate_object(Class cls, int extra) 
+static OBJC_INLINE id objc_allocate_object(Class cls, int extra)
     { return class_createInstance(cls, extra); }
 #endif
 

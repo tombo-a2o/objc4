@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 1999-2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 /*
@@ -30,7 +30,7 @@
 
 #include "objc-config.h"
 
-/* Isolate ourselves from the definitions of id and Class in the compiler 
+/* Isolate ourselves from the definitions of id and Class in the compiler
  * and public headers.
  */
 
@@ -56,7 +56,7 @@ namespace {
 };
 
 
-union isa_t 
+union isa_t
 {
     isa_t() { }
     isa_t(uintptr_t value) : bits(value) { }
@@ -339,7 +339,7 @@ __BEGIN_DECLS
    Assorted metadata precooked in the dyld shared cache.
    Never set for images outside the shared cache file itself.
 */
-   
+
 
 typedef struct _header_info {
     struct _header_info *next;
@@ -366,7 +366,7 @@ typedef struct _header_info {
     SEL *selrefs;
     size_t selrefCount;
     struct objc_class **clsrefs;
-    size_t clsrefCount;    
+    size_t clsrefCount;
     TCHAR *moduleName;
 # endif
 #endif
@@ -615,7 +615,7 @@ extern void _rwlock_assert_unlocked_debug(rwlock_t *l, const char *name);
 
 /* Non-GC: no ignored selectors
    GC (i386 Mac): some selectors ignored, remapped to kIgnore
-   GC (others): some selectors ignored, but not remapped 
+   GC (others): some selectors ignored, but not remapped
 */
 
 static inline int ignoreSelector(SEL sel)
@@ -625,11 +625,11 @@ static inline int ignoreSelector(SEL sel)
 #elif SUPPORT_IGNORED_SELECTOR_CONSTANT
     return UseGC  &&  sel == (SEL)kIgnore;
 #else
-    return UseGC  &&  
-        (sel == @selector(retain)       ||  
-         sel == @selector(release)      ||  
-         sel == @selector(autorelease)  ||  
-         sel == @selector(retainCount)  ||  
+    return UseGC  &&
+        (sel == @selector(retain)       ||
+         sel == @selector(release)      ||
+         sel == @selector(autorelease)  ||
+         sel == @selector(retainCount)  ||
          sel == @selector(dealloc));
 #endif
 }
@@ -642,13 +642,13 @@ static inline int ignoreSelectorNamed(const char *sel)
     // release retain retainCount dealloc autorelease
     return (UseGC &&
             (  (sel[0] == 'r' && sel[1] == 'e' &&
-                (strcmp(&sel[2], "lease") == 0 || 
+                (strcmp(&sel[2], "lease") == 0 ||
                  strcmp(&sel[2], "tain") == 0 ||
                  strcmp(&sel[2], "tainCount") == 0 ))
                ||
                (strcmp(sel, "dealloc") == 0)
-               || 
-               (sel[0] == 'a' && sel[1] == 'u' && 
+               ||
+               (sel[0] == 'a' && sel[1] == 'u' &&
                 strcmp(&sel[2], "torelease") == 0)));
 #endif
 }
@@ -728,7 +728,7 @@ typedef struct {
     struct alt_handler_list *handlerList;  // for exception alt handlers
     char *printableNames[4];  // temporary demangled names for logging
 
-    // If you add new fields here, don't forget to update 
+    // If you add new fields here, don't forget to update
     // _objc_pthread_destroyspecific()
 
 } _objc_pthread_data;
@@ -770,7 +770,7 @@ extern void layout_bitmap_set_ivar(layout_bitmap bits, const char *type, size_t 
 extern void layout_bitmap_grow(layout_bitmap *bits, size_t newCount);
 extern void layout_bitmap_slide(layout_bitmap *bits, size_t oldPos, size_t newPos);
 extern void layout_bitmap_slide_anywhere(layout_bitmap *bits, size_t oldPos, size_t newPos);
-extern BOOL layout_bitmap_splat(layout_bitmap dst, layout_bitmap src, 
+extern BOOL layout_bitmap_splat(layout_bitmap dst, layout_bitmap src,
                                 size_t oldSrcInstanceSize);
 extern BOOL layout_bitmap_or(layout_bitmap dst, layout_bitmap src, const char *msg);
 extern BOOL layout_bitmap_clear(layout_bitmap dst, layout_bitmap src, const char *msg);
@@ -779,15 +779,15 @@ extern void layout_bitmap_print(layout_bitmap bits);
 
 // fixme runtime
 extern Class look_up_class(const char *aClassName, BOOL includeUnconnected, BOOL includeClassHandler);
-extern const char *map_images(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
-extern const char *map_images_nolock(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
-extern const char * load_images(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
-extern BOOL load_images_nolock(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
-extern void unmap_image(const struct mach_header *mh, intptr_t vmaddr_slide);
-extern void unmap_image_nolock(const struct mach_header *mh);
-extern void _read_images(header_info **hList, uint32_t hCount);
-extern void prepare_load_methods(header_info *hi);
-extern void _unload_image(header_info *hi);
+//extern const char *map_images(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
+//extern const char *map_images_nolock(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
+//extern const char * load_images(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
+//extern BOOL load_images_nolock(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
+//extern void unmap_image(const struct mach_header *mh, intptr_t vmaddr_slide);
+//extern void unmap_image_nolock(const struct mach_header *mh);
+//extern void _read_images(header_info **hList, uint32_t hCount);
+//extern void prepare_load_methods(header_info *hi);
+//extern void _unload_image(header_info *hi);
 extern const char ** _objc_copyClassNamesForImage(header_info *hi, unsigned int *outCount);
 
 
@@ -830,7 +830,7 @@ __END_DECLS
 #   define _STATIC_ASSERT3(x, line)                                     \
         typedef struct {                                                \
             int _static_assert[(x) ? 0 : -1];                           \
-        } _static_assert_ ## line __attribute__((unavailable)) 
+        } _static_assert_ ## line __attribute__((unavailable))
 #endif
 
 #define countof(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -854,9 +854,9 @@ inline void operator delete[](void* p, const std::nothrow_t&) throw() { _free_in
 #endif
 
 
-// DisguisedPtr<T> acts like pointer type T*, except the 
+// DisguisedPtr<T> acts like pointer type T*, except the
 // stored value is disguised to hide it from tools like `leaks`.
-// nil is disguised as itself so zero-filled memory works as expected, 
+// nil is disguised as itself so zero-filled memory works as expected,
 // which means 0x80..00 is also diguised as itself but we don't care
 template <typename T>
 class DisguisedPtr {
@@ -872,9 +872,9 @@ class DisguisedPtr {
 
  public:
     DisguisedPtr() { }
-    DisguisedPtr(T* ptr) 
+    DisguisedPtr(T* ptr)
         : value(disguise(ptr)) { }
-    DisguisedPtr(const DisguisedPtr<T>& ptr) 
+    DisguisedPtr(const DisguisedPtr<T>& ptr)
         : value(ptr.value) { }
 
     DisguisedPtr<T>& operator = (T* rhs) {
@@ -889,23 +889,23 @@ class DisguisedPtr {
     operator T* () const {
         return undisguise(value);
     }
-    T* operator -> () const { 
+    T* operator -> () const {
         return undisguise(value);
     }
-    T& operator * () const { 
+    T& operator * () const {
         return *undisguise(value);
     }
     T& operator [] (size_t i) const {
         return undisguise(value)[i];
     }
 
-    // pointer arithmetic operators omitted 
+    // pointer arithmetic operators omitted
     // because we don't currently use them anywhere
 };
 
 
 // Pointer hash function.
-// This is not a terrific hash, but it is fast 
+// This is not a terrific hash, but it is fast
 // and not outrageously flawed for our purposes.
 
 // Based on principles from http://locklessinc.com/articles/fast_hash/
@@ -958,4 +958,3 @@ static uint32_t ptr_hash(uint32_t key)
 #include "objc-object.h"
 
 #endif /* _OBJC_PRIVATE_H_ */
-

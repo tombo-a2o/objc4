@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2009 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -25,9 +25,9 @@
 #ifndef _OBJC_INTERNAL_H
 #define _OBJC_INTERNAL_H
 
-/* 
+/*
  * WARNING  DANGER  HAZARD  BEWARE  EEK
- * 
+ *
  * Everything in this file is for Apple Internal use only.
  * These will change in arbitrary OS updates and in unpredictable ways.
  * When your program breaks, you get to keep both pieces.
@@ -40,12 +40,13 @@
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <Availability.h>
-#include <malloc/malloc.h>
-#include <dispatch/dispatch.h>
+#include <malloc.h>
+#warning "we need GCD!"
+//#include <dispatch/dispatch.h>
 
 __BEGIN_DECLS
 
-// This is the allocation size required for each of the class and the metaclass 
+// This is the allocation size required for each of the class and the metaclass
 // with objc_initializeClassPair() and objc_readClassPair().
 // The runtime's class structure will never grow beyond this.
 #define OBJC_MAX_CLASS_SIZE (32*sizeof(void*))
@@ -55,11 +56,11 @@ __BEGIN_DECLS
 // Returns nil if a class with the same name already exists.
 // Returns nil if the superclass is under construction.
 // Call objc_registerClassPair() when you are done.
-OBJC_EXPORT Class objc_initializeClassPair(Class superclass, const char *name, Class cls, Class metacls) 
+OBJC_EXPORT Class objc_initializeClassPair(Class superclass, const char *name, Class cls, Class metacls)
     __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_3_0);
 
 // Class and metaclass construction from a compiler-generated memory image.
-// cls and cls->isa must each be OBJC_MAX_CLASS_SIZE bytes. 
+// cls and cls->isa must each be OBJC_MAX_CLASS_SIZE bytes.
 // Extra bytes not used the the metadata must be zero.
 // info is the same objc_image_info that would be emitted by a static compiler.
 // Returns nil if a class with the same name already exists.
@@ -68,13 +69,13 @@ OBJC_EXPORT Class objc_initializeClassPair(Class superclass, const char *name, C
 // Do not call objc_registerClassPair().
 #if __OBJC2__
 struct objc_image_info;
-OBJC_EXPORT Class objc_readClassPair(Class cls, 
+OBJC_EXPORT Class objc_readClassPair(Class cls,
                                      const struct objc_image_info *info)
     __OSX_AVAILABLE_STARTING(__MAC_10_10, __IPHONE_8_0);
 #endif
 
 // Batch object allocation using malloc_zone_batch_malloc().
-OBJC_EXPORT unsigned class_createInstances(Class cls, size_t extraBytes, 
+OBJC_EXPORT unsigned class_createInstances(Class cls, size_t extraBytes,
                                            id *results, unsigned num_requested)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_4_3)
     OBJC_ARC_UNAVAILABLE;
@@ -84,7 +85,7 @@ OBJC_EXPORT Class _objc_getFreedObjectClass(void)
     __OSX_AVAILABLE_STARTING(__MAC_10_0, __IPHONE_2_0);
 
 // Return YES if GC is on and `object` is a GC allocation.
-OBJC_EXPORT BOOL objc_isAuto(id object) 
+OBJC_EXPORT BOOL objc_isAuto(id object)
     __OSX_AVAILABLE_STARTING(__MAC_10_4, __IPHONE_NA);
 
 // env NSObjCMessageLoggingEnabled
@@ -114,7 +115,7 @@ OBJC_EXPORT id objc_assign_ivar_generic(id value, id dest, ptrdiff_t offset)
 // Install missing-class callback. Used by the late unlamented ZeroLink.
 OBJC_EXPORT void _objc_setClassLoader(BOOL (*newClassLoader)(const char *))  OBJC2_UNAVAILABLE;
 
-// Install handler for allocation failures. 
+// Install handler for allocation failures.
 // Handler may abort, or throw, or provide an object to return.
 OBJC_EXPORT void _objc_setBadAllocHandler(id (*newHandler)(Class isa))
      __OSX_AVAILABLE_STARTING(__MAC_10_8, __IPHONE_6_0);
@@ -142,7 +143,7 @@ OBJC_EXPORT void _objc_error(id rcv, const char *fmt, va_list args)
 
 #if OBJC_HAVE_TAGGED_POINTERS
 
-// Tagged pointer layout and usage is subject to change 
+// Tagged pointer layout and usage is subject to change
 // on different OS versions. The current layout is:
 // (MSB)
 // 60 bits  payload
@@ -157,13 +158,13 @@ typedef uint8_t objc_tag_index_t;
 enum
 #endif
 {
-    OBJC_TAG_NSAtom            = 0, 
-    OBJC_TAG_1                 = 1, 
-    OBJC_TAG_NSString          = 2, 
-    OBJC_TAG_NSNumber          = 3, 
-    OBJC_TAG_NSIndexPath       = 4, 
-    OBJC_TAG_NSManagedObjectID = 5, 
-    OBJC_TAG_NSDate            = 6, 
+    OBJC_TAG_NSAtom            = 0,
+    OBJC_TAG_1                 = 1,
+    OBJC_TAG_NSString          = 2,
+    OBJC_TAG_NSNumber          = 3,
+    OBJC_TAG_NSIndexPath       = 4,
+    OBJC_TAG_NSManagedObjectID = 5,
+    OBJC_TAG_NSDate            = 6,
     OBJC_TAG_7                 = 7
 };
 #if __has_feature(objc_fixed_enum)  &&  !defined(__cplusplus)
@@ -176,7 +177,7 @@ OBJC_EXPORT void _objc_registerTaggedPointerClass(objc_tag_index_t tag, Class cl
 OBJC_EXPORT Class _objc_getClassForTag(objc_tag_index_t tag)
     __OSX_AVAILABLE_STARTING(__MAC_10_9, __IPHONE_7_0);
 
-static inline bool 
+static inline bool
 _objc_taggedPointersEnabled(void)
 {
     extern uintptr_t objc_debug_taggedpointer_mask;
@@ -195,28 +196,28 @@ _objc_makeTaggedPointer(objc_tag_index_t tag, uintptr_t value)
     return (void*)((1UL << 63) | ((uintptr_t)tag << 60) | (value & ~(0xFUL << 60)));
 }
 
-static inline bool 
-_objc_isTaggedPointer(const void *ptr) 
+static inline bool
+_objc_isTaggedPointer(const void *ptr)
 {
     return (intptr_t)ptr < 0;  // a.k.a. ptr & 0x8000000000000000
 }
 
-static inline objc_tag_index_t 
-_objc_getTaggedPointerTag(const void *ptr) 
+static inline objc_tag_index_t
+_objc_getTaggedPointerTag(const void *ptr)
 {
     // assert(_objc_isTaggedPointer(ptr));
     return (objc_tag_index_t)(((uintptr_t)ptr >> 60) & 0x7);
 }
 
 static inline uintptr_t
-_objc_getTaggedPointerValue(const void *ptr) 
+_objc_getTaggedPointerValue(const void *ptr)
 {
     // assert(_objc_isTaggedPointer(ptr));
     return (uintptr_t)ptr & 0x0fffffffffffffff;
 }
 
 static inline intptr_t
-_objc_getTaggedPointerSignedValue(const void *ptr) 
+_objc_getTaggedPointerSignedValue(const void *ptr)
 {
     // assert(_objc_isTaggedPointer(ptr));
     return ((intptr_t)ptr << 4) >> 4;
@@ -236,28 +237,28 @@ _objc_makeTaggedPointer(objc_tag_index_t tag, uintptr_t value)
     return (void *)((value << 4) | ((uintptr_t)tag << 1) | 1);
 }
 
-static inline bool 
-_objc_isTaggedPointer(const void *ptr) 
+static inline bool
+_objc_isTaggedPointer(const void *ptr)
 {
     return (uintptr_t)ptr & 1;
 }
 
-static inline objc_tag_index_t 
-_objc_getTaggedPointerTag(const void *ptr) 
+static inline objc_tag_index_t
+_objc_getTaggedPointerTag(const void *ptr)
 {
     // assert(_objc_isTaggedPointer(ptr));
     return (objc_tag_index_t)(((uintptr_t)ptr & 0xe) >> 1);
 }
 
 static inline uintptr_t
-_objc_getTaggedPointerValue(const void *ptr) 
+_objc_getTaggedPointerValue(const void *ptr)
 {
     // assert(_objc_isTaggedPointer(ptr));
     return (uintptr_t)ptr >> 4;
 }
 
 static inline intptr_t
-_objc_getTaggedPointerSignedValue(const void *ptr) 
+_objc_getTaggedPointerSignedValue(const void *ptr)
 {
     // assert(_objc_isTaggedPointer(ptr));
     return (intptr_t)ptr >> 4;
@@ -300,7 +301,7 @@ OBJC_EXPORT uintptr_t _object_getExternalHash(id object)
  *
  * @return The IMP corresponding to the instance method implemented by
  * the class of \e obj.
- * 
+ *
  * @note Equivalent to:
  *
  * class_getMethodImplementation(object_getClass(obj), name);
@@ -327,7 +328,7 @@ OBJC_EXPORT BOOL _class_isFutureClass(Class cls)
     __OSX_AVAILABLE_STARTING(__MAC_10_9, __IPHONE_7_0);
 
 
-// Obsolete ARC conversions. 
+// Obsolete ARC conversions.
 
 // hack - remove and reinstate objc.h's definitions
 #undef objc_retainedObject
@@ -488,23 +489,23 @@ objc_loadWeakRetained(id *location)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 OBJC_EXPORT
-id 
-objc_initWeak(id *addr, id val) 
+id
+objc_initWeak(id *addr, id val)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 OBJC_EXPORT
-void 
-objc_destroyWeak(id *addr) 
+void
+objc_destroyWeak(id *addr)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 OBJC_EXPORT
-void 
+void
 objc_copyWeak(id *to, id *from)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 OBJC_EXPORT
-void 
-objc_moveWeak(id *to, id *from) 
+void
+objc_moveWeak(id *to, id *from)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 
@@ -519,7 +520,7 @@ OBJC_EXPORT BOOL objc_should_deallocate(id object)
 OBJC_EXPORT void objc_clear_deallocating(id object)
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
- 
+
 // to make CF link for now
 
 OBJC_EXPORT

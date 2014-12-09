@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 1999-2002, 2005-2008 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -28,7 +28,7 @@
 
 // Define SUPPORT_GC=1 to enable garbage collection.
 // Be sure to edit OBJC_NO_GC in objc-auto.h as well.
-#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32
+#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32 || TARGET_OS_EMSCRIPTEN
 #   define SUPPORT_GC 0
 #else
 #   define SUPPORT_GC 1
@@ -49,7 +49,7 @@
 #endif
 
 // Define SUPPORT_PREOPT=1 to enable dyld shared cache optimizations
-#if TARGET_OS_WIN32  ||  TARGET_IPHONE_SIMULATOR
+#if TARGET_OS_WIN32  ||  TARGET_IPHONE_SIMULATOR || TARGET_OS_EMSCRIPTEN
 #   define SUPPORT_PREOPT 0
 #else
 #   define SUPPORT_PREOPT 1
@@ -63,7 +63,7 @@
 #   define SUPPORT_TAGGED_POINTERS 1
 #endif
 
-// Define SUPPORT_MSB_TAGGED_POINTERS to use the MSB 
+// Define SUPPORT_MSB_TAGGED_POINTERS to use the MSB
 // as the tagged pointer marker instead of the LSB.
 // Be sure to edit tagged pointer SPI in objc-internal.h as well.
 #if !SUPPORT_TAGGED_POINTERS  ||  !TARGET_OS_IPHONE
@@ -112,7 +112,7 @@
 #   define SUPPORT_ZEROCOST_EXCEPTIONS 1
 #endif
 
-// Define SUPPORT_ALT_HANDLERS if you're using zero-cost exceptions 
+// Define SUPPORT_ALT_HANDLERS if you're using zero-cost exceptions
 // but also need to support AppKit's alt-handler scheme
 // Be sure to edit objc-exception.h as well (objc_add/removeExceptionHandler)
 #if !SUPPORT_ZEROCOST_EXCEPTIONS  ||  TARGET_OS_IPHONE  ||  TARGET_OS_EMBEDDED
@@ -122,7 +122,7 @@
 #endif
 
 // Define SUPPORT_RETURN_AUTORELEASE to optimize autoreleased return values
-#if !__OBJC2__  ||  TARGET_OS_WIN32
+#if !__OBJC2__  ||  TARGET_OS_WIN32 || TARGET_OS_EMSCRIPTEN
 #   define SUPPORT_RETURN_AUTORELEASE 0
 #else
 #   define SUPPORT_RETURN_AUTORELEASE 1

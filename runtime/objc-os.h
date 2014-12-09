@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -42,12 +42,16 @@
 #   define WORD_BITS 32
 #endif
 
+#warning "remove word_align"
+
 static inline uint32_t word_align(uint32_t x) {
     return (x + WORD_MASK) & ~WORD_MASK;
 }
+/*
 static inline size_t word_align(size_t x) {
     return (x + WORD_MASK) & ~WORD_MASK;
 }
+*/
 
 #if TARGET_OS_MAC
 
@@ -92,7 +96,7 @@ static inline size_t word_align(size_t x) {
 #   include <System/pthread_machdep.h>
 #   include "objc-probes.h"  // generated dtrace probe definitions.
 
-// Some libc functions call objc_msgSend() 
+// Some libc functions call objc_msgSend()
 // so we can't use them without deadlocks.
 void syslog(int, const char *, ...) UNAVAILABLE_ATTRIBUTE;
 void vsyslog(int, const char *, va_list) UNAVAILABLE_ATTRIBUTE;
@@ -103,13 +107,13 @@ void vsyslog(int, const char *, va_list) UNAVAILABLE_ATTRIBUTE;
 
 
 
-static ALWAYS_INLINE uintptr_t 
+static ALWAYS_INLINE uintptr_t
 addc(uintptr_t lhs, uintptr_t rhs, uintptr_t carryin, uintptr_t *carryout)
 {
     return __builtin_addcl(lhs, rhs, carryin, carryout);
 }
 
-static ALWAYS_INLINE uintptr_t 
+static ALWAYS_INLINE uintptr_t
 subc(uintptr_t lhs, uintptr_t rhs, uintptr_t carryin, uintptr_t *carryout)
 {
     return __builtin_subcl(lhs, rhs, carryin, carryout);
@@ -119,62 +123,62 @@ subc(uintptr_t lhs, uintptr_t rhs, uintptr_t carryin, uintptr_t *carryout)
 #if __arm64__
 
 static ALWAYS_INLINE
-uintptr_t 
+uintptr_t
 LoadExclusive(uintptr_t *src)
 {
     uintptr_t result;
-    asm("ldxr %x0, [%x1]" 
-        : "=r" (result) 
+    asm("ldxr %x0, [%x1]"
+        : "=r" (result)
         : "r" (src), "m" (*src));
     return result;
 }
 
 static ALWAYS_INLINE
-bool 
+bool
 StoreExclusive(uintptr_t *dst, uintptr_t oldvalue __unused, uintptr_t value)
 {
     uint32_t result;
-    asm("stxr %w0, %x2, [%x3]" 
-        : "=r" (result), "=m" (*dst) 
+    asm("stxr %w0, %x2, [%x3]"
+        : "=r" (result), "=m" (*dst)
         : "r" (value), "r" (dst));
     return !result;
 }
 
 
 static ALWAYS_INLINE
-bool 
+bool
 StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue __unused, uintptr_t value)
 {
     uint32_t result;
-    asm("stlxr %w0, %x2, [%x3]" 
-        : "=r" (result), "=m" (*dst) 
+    asm("stlxr %w0, %x2, [%x3]"
+        : "=r" (result), "=m" (*dst)
         : "r" (value), "r" (dst));
     return !result;
 }
 
 
-#elif __arm__  
+#elif __arm__
 
 static ALWAYS_INLINE
-uintptr_t 
+uintptr_t
 LoadExclusive(uintptr_t *src)
 {
     return *src;
 }
 
 static ALWAYS_INLINE
-bool 
+bool
 StoreExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
 {
-    return OSAtomicCompareAndSwapPtr((void *)oldvalue, (void *)value, 
+    return OSAtomicCompareAndSwapPtr((void *)oldvalue, (void *)value,
                                      (void **)dst);
 }
 
 static ALWAYS_INLINE
-bool 
+bool
 StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
 {
-    return OSAtomicCompareAndSwapPtrBarrier((void *)oldvalue, (void *)value, 
+    return OSAtomicCompareAndSwapPtrBarrier((void *)oldvalue, (void *)value,
                                             (void **)dst);
 }
 
@@ -182,28 +186,28 @@ StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
 #elif __x86_64__  ||  __i386__
 
 static ALWAYS_INLINE
-uintptr_t 
+uintptr_t
 LoadExclusive(uintptr_t *src)
 {
     return *src;
 }
 
 static ALWAYS_INLINE
-bool 
+bool
 StoreExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
 {
-    
+
     return __sync_bool_compare_and_swap((void **)dst, (void *)oldvalue, (void *)value);
 }
 
 static ALWAYS_INLINE
-bool 
+bool
 StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
 {
     return StoreExclusive(dst, oldvalue, value);
 }
 
-#else 
+#else
 #   error unknown architecture
 #endif
 
@@ -288,8 +292,45 @@ StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
     __declspec(noinline) prototype { __asm { } }
 
 /* stub out dtrace probes */
-#   define OBJC_RUNTIME_OBJC_EXCEPTION_RETHROW() do {} while(0)  
+#   define OBJC_RUNTIME_OBJC_EXCEPTION_RETHROW() do {} while(0)
 #   define OBJC_RUNTIME_OBJC_EXCEPTION_THROW(arg0) do {} while(0)
+
+#elif TARGET_OS_EMSCRIPTEN
+
+#warning "not implemented yet"
+
+#   include <stdio.h>
+#   include <stdlib.h>
+#   include <stdint.h>
+#   include <stdarg.h>
+#   include <string.h>
+#   include <assert.h>
+#   include <malloc.h>
+#   include <ctype.h>
+#   include <errno.h>
+#   include <dlfcn.h>
+#   include <fcntl.h>
+#   include <assert.h>
+#   include <limits.h>
+#   include <syslog.h>
+#   include <unistd.h>
+#   include <pthread.h>
+
+#   if __cplusplus
+#       include <vector>
+#       include <algorithm>
+#       include <functional>
+        using namespace std;
+#       define __BEGIN_DECLS extern "C" {
+#       define __END_DECLS   }
+#   else
+#       define __BEGIN_DECLS /*empty*/
+#       define __END_DECLS   /*empty*/
+#   endif
+
+#define ALWAYS_INLINE inline __attribute__((always_inline))
+#define NEVER_INLINE inline __attribute__((noinline))
+
 
 #else
 #   error unknown OS
@@ -383,21 +424,21 @@ static __inline size_t malloc_size(const void *p) { return _msize((void*)p); /* 
 
 // OSAtomic
 
-static __inline BOOL OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst) 
-{ 
+static __inline BOOL OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
+{
     // fixme barrier is overkill
     long original = InterlockedCompareExchange(dst, newl, oldl);
     return (original == oldl);
 }
 
-static __inline BOOL OSAtomicCompareAndSwapPtrBarrier(void *oldp, void *newp, void * volatile *dst) 
-{ 
+static __inline BOOL OSAtomicCompareAndSwapPtrBarrier(void *oldp, void *newp, void * volatile *dst)
+{
     void *original = InterlockedCompareExchangePointer(dst, newp, oldp);
     return (original == oldp);
 }
 
-static __inline BOOL OSAtomicCompareAndSwap32Barrier(int32_t oldl, int32_t newl, int32_t volatile *dst) 
-{ 
+static __inline BOOL OSAtomicCompareAndSwap32Barrier(int32_t oldl, int32_t newl, int32_t volatile *dst)
+{
     long original = InterlockedCompareExchange((volatile long *)dst, newl, oldl);
     return (original == oldl);
 }
@@ -412,33 +453,32 @@ static __inline int32_t OSAtomicIncrement32Barrier(volatile int32_t *dst)
     return InterlockedIncrement((volatile long *)dst);
 }
 
-
 // Internal data types
 
 typedef DWORD objc_thread_t;  // thread ID
-static __inline int thread_equal(objc_thread_t t1, objc_thread_t t2) { 
-    return t1 == t2; 
+static __inline int thread_equal(objc_thread_t t1, objc_thread_t t2) {
+    return t1 == t2;
 }
-static __inline objc_thread_t thread_self(void) { 
-    return GetCurrentThreadId(); 
+static __inline objc_thread_t thread_self(void) {
+    return GetCurrentThreadId();
 }
 
 typedef struct {
     DWORD key;
     void (*dtor)(void *);
 } tls_key_t;
-static __inline tls_key_t tls_create(void (*dtor)(void*)) { 
+static __inline tls_key_t tls_create(void (*dtor)(void*)) {
     // fixme need dtor registry for DllMain to call on thread detach
     tls_key_t k;
     k.key = TlsAlloc();
     k.dtor = dtor;
     return k;
 }
-static __inline void *tls_get(tls_key_t k) { 
-    return TlsGetValue(k.key); 
+static __inline void *tls_get(tls_key_t k) {
+    return TlsGetValue(k.key);
 }
-static __inline void tls_set(tls_key_t k, void *value) { 
-    TlsSetValue(k.key, value); 
+static __inline void tls_set(tls_key_t k, void *value) {
+    TlsSetValue(k.key, value);
 }
 
 typedef struct {
@@ -446,24 +486,24 @@ typedef struct {
 } mutex_t;
 #define MUTEX_INITIALIZER {0};
 extern void mutex_init(mutex_t *m);
-static __inline int _mutex_lock_nodebug(mutex_t *m) { 
+static __inline int _mutex_lock_nodebug(mutex_t *m) {
     // fixme error check
     if (!m->lock) {
         mutex_init(m);
     }
-    EnterCriticalSection(m->lock); 
+    EnterCriticalSection(m->lock);
     return 0;
 }
-static __inline bool _mutex_try_lock_nodebug(mutex_t *m) { 
+static __inline bool _mutex_try_lock_nodebug(mutex_t *m) {
     // fixme error check
     if (!m->lock) {
         mutex_init(m);
     }
-    return TryEnterCriticalSection(m->lock); 
+    return TryEnterCriticalSection(m->lock);
 }
-static __inline int _mutex_unlock_nodebug(mutex_t *m) { 
+static __inline int _mutex_unlock_nodebug(mutex_t *m) {
     // fixme error check
-    LeaveCriticalSection(m->lock); 
+    LeaveCriticalSection(m->lock);
     return 0;
 }
 
@@ -480,15 +520,15 @@ typedef struct {
 #define RECURSIVE_MUTEX_INITIALIZER {0};
 #define RECURSIVE_MUTEX_NOT_LOCKED 1
 extern void recursive_mutex_init(recursive_mutex_t *m);
-static __inline int _recursive_mutex_lock_nodebug(recursive_mutex_t *m) { 
+static __inline int _recursive_mutex_lock_nodebug(recursive_mutex_t *m) {
     assert(m->mutex);
     return WaitForSingleObject(m->mutex, INFINITE);
 }
-static __inline bool _recursive_mutex_try_lock_nodebug(recursive_mutex_t *m) { 
+static __inline bool _recursive_mutex_try_lock_nodebug(recursive_mutex_t *m) {
     assert(m->mutex);
     return (WAIT_OBJECT_0 == WaitForSingleObject(m->mutex, 0));
 }
-static __inline int _recursive_mutex_unlock_nodebug(recursive_mutex_t *m) { 
+static __inline int _recursive_mutex_unlock_nodebug(recursive_mutex_t *m) {
     assert(m->mutex);
     return ReleaseMutex(m->mutex) ? 0 : RECURSIVE_MUTEX_NOT_LOCKED;
 }
@@ -510,7 +550,7 @@ typedef struct {
     HANDLE waitersDone;  // auto-reset event after everyone gets a broadcast
     CRITICAL_SECTION waitCountLock;  // guards waitCount and didBroadcast
     unsigned int waitCount;
-    int didBroadcast; 
+    int didBroadcast;
 } monitor_t;
 #define MONITOR_INITIALIZER { 0 }
 #define MONITOR_NOT_ENTERED 1
@@ -527,7 +567,7 @@ static inline int _monitor_exit_nodebug(monitor_t *c) {
     if (!ReleaseMutex(c->mutex)) return MONITOR_NOT_ENTERED;
     else return 0;
 }
-static inline int _monitor_wait_nodebug(monitor_t *c) { 
+static inline int _monitor_wait_nodebug(monitor_t *c) {
     int last;
     EnterCriticalSection(&c->waitCountLock);
     c->waitCount++;
@@ -550,7 +590,7 @@ static inline int _monitor_wait_nodebug(monitor_t *c) {
     // fixme error checking
     return 0;
 }
-static inline int monitor_notify(monitor_t *c) { 
+static inline int monitor_notify(monitor_t *c) {
     int haveWaiters;
 
     EnterCriticalSection(&c->waitCountLock);
@@ -564,7 +604,7 @@ static inline int monitor_notify(monitor_t *c) {
     // fixme error checking
     return 0;
 }
-static inline int monitor_notifyAll(monitor_t *c) { 
+static inline int monitor_notifyAll(monitor_t *c) {
     EnterCriticalSection(&c->waitCountLock);
     if (c->waitCount == 0) {
         LeaveCriticalSection(&c->waitCountLock);
@@ -629,26 +669,26 @@ OBJC_EXTERN IMAGE_DOS_HEADER __ImageBase;
 
 typedef pthread_t objc_thread_t;
 
-static __inline int thread_equal(objc_thread_t t1, objc_thread_t t2) { 
-    return pthread_equal(t1, t2); 
+static __inline int thread_equal(objc_thread_t t1, objc_thread_t t2) {
+    return pthread_equal(t1, t2);
 }
-static __inline objc_thread_t thread_self(void) { 
-    return pthread_self(); 
+static __inline objc_thread_t thread_self(void) {
+    return pthread_self();
 }
 
 
 typedef pthread_key_t tls_key_t;
 
-static inline tls_key_t tls_create(void (*dtor)(void*)) { 
+static inline tls_key_t tls_create(void (*dtor)(void*)) {
     tls_key_t k;
-    pthread_key_create(&k, dtor); 
+    pthread_key_create(&k, dtor);
     return k;
 }
-static inline void *tls_get(tls_key_t k) { 
-    return pthread_getspecific(k); 
+static inline void *tls_get(tls_key_t k) {
+    return pthread_getspecific(k);
 }
-static inline void tls_set(tls_key_t k, void *value) { 
-    pthread_setspecific(k, value); 
+static inline void tls_set(tls_key_t k, void *value) {
+    pthread_setspecific(k, value);
 }
 
 #if SUPPORT_DIRECT_THREAD_KEYS
@@ -709,8 +749,8 @@ tls_get_direct(void **tsdb, tls_key_t k)
 #else
 // not arm
 
-static inline void *tls_get_direct(tls_key_t k) 
-{ 
+static inline void *tls_get_direct(tls_key_t k)
+{
     assert(is_valid_direct_key(k));
 
     if (_pthread_has_direct_tsd()) {
@@ -719,8 +759,8 @@ static inline void *tls_get_direct(tls_key_t k)
         return pthread_getspecific(k);
     }
 }
-static inline void tls_set_direct(tls_key_t k, void *value) 
-{ 
+static inline void tls_set_direct(tls_key_t k, void *value)
+{
     assert(is_valid_direct_key(k));
 
     if (_pthread_has_direct_tsd()) {
@@ -740,35 +780,35 @@ static inline void tls_set_direct(tls_key_t k, void *value)
 typedef pthread_mutex_t mutex_t;
 #define MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER;
 
-static inline int _mutex_lock_nodebug(mutex_t *m) { 
-    return pthread_mutex_lock(m); 
+static inline int _mutex_lock_nodebug(mutex_t *m) {
+    return pthread_mutex_lock(m);
 }
-static inline bool _mutex_try_lock_nodebug(mutex_t *m) { 
-    return !pthread_mutex_trylock(m); 
+static inline bool _mutex_try_lock_nodebug(mutex_t *m) {
+    return !pthread_mutex_trylock(m);
 }
-static inline int _mutex_unlock_nodebug(mutex_t *m) { 
-    return pthread_mutex_unlock(m); 
+static inline int _mutex_unlock_nodebug(mutex_t *m) {
+    return pthread_mutex_unlock(m);
 }
 
 
-typedef struct { 
-    pthread_mutex_t *mutex; 
+typedef struct {
+    pthread_mutex_t *mutex;
 } recursive_mutex_t;
 #define RECURSIVE_MUTEX_INITIALIZER {0};
 #define RECURSIVE_MUTEX_NOT_LOCKED EPERM
 extern void recursive_mutex_init(recursive_mutex_t *m);
 
-static inline int _recursive_mutex_lock_nodebug(recursive_mutex_t *m) { 
+static inline int _recursive_mutex_lock_nodebug(recursive_mutex_t *m) {
     assert(m->mutex);
-    return pthread_mutex_lock(m->mutex); 
+    return pthread_mutex_lock(m->mutex);
 }
-static inline bool _recursive_mutex_try_lock_nodebug(recursive_mutex_t *m) { 
+static inline bool _recursive_mutex_try_lock_nodebug(recursive_mutex_t *m) {
     assert(m->mutex);
-    return !pthread_mutex_trylock(m->mutex); 
+    return !pthread_mutex_trylock(m->mutex);
 }
-static inline int _recursive_mutex_unlock_nodebug(recursive_mutex_t *m) { 
+static inline int _recursive_mutex_unlock_nodebug(recursive_mutex_t *m) {
     assert(m->mutex);
-    return pthread_mutex_unlock(m->mutex); 
+    return pthread_mutex_unlock(m->mutex);
 }
 
 
@@ -795,13 +835,13 @@ static inline int _monitor_enter_nodebug(monitor_t *c) {
 static inline int _monitor_exit_nodebug(monitor_t *c) {
     return pthread_mutex_unlock(&c->mutex);
 }
-static inline int _monitor_wait_nodebug(monitor_t *c) { 
+static inline int _monitor_wait_nodebug(monitor_t *c) {
     return pthread_cond_wait(&c->cond, &c->mutex);
 }
-static inline int monitor_notify(monitor_t *c) { 
+static inline int monitor_notify(monitor_t *c) {
     return pthread_cond_signal(&c->cond);
 }
-static inline int monitor_notifyAll(monitor_t *c) { 
+static inline int monitor_notifyAll(monitor_t *c) {
     return pthread_cond_broadcast(&c->cond);
 }
 
@@ -818,7 +858,7 @@ static inline semaphore_t create_semaphore(void)
 
 
 /* Custom read-write lock
-   - reader is atomic add/subtract 
+   - reader is atomic add/subtract
    - writer is pthread mutex plus atomic add/subtract
    - fairness: new readers wait if a writer wants in
    - fairness: when writer completes, readers (probably) precede new writer
@@ -895,6 +935,247 @@ typedef struct section_64 sectionType;
 
 /* Secure /tmp usage */
 extern int secure_open(const char *filename, int flags, uid_t euid);
+
+#elif TARGET_OS_EMSCRIPTEN
+
+#warning "not implemented fully"
+
+#define __unused
+
+#   define SUPPORT_DIRECT_THREAD_KEYS 0
+
+typedef void * malloc_zone_t;
+
+static __inline malloc_zone_t malloc_default_zone(void) { return (malloc_zone_t)-1; }
+static __inline void *malloc_zone_malloc(malloc_zone_t z, size_t size) { return malloc(size); }
+static __inline void *malloc_zone_calloc(malloc_zone_t z, size_t size, size_t count) { return calloc(size, count); }
+static __inline void *malloc_zone_realloc(malloc_zone_t z, void *p, size_t size) { return realloc(p, size); }
+static __inline void malloc_zone_free(malloc_zone_t z, void *p) { free(p); }
+static __inline malloc_zone_t malloc_zone_from_ptr(const void *p) { return (malloc_zone_t)-1; }
+static __inline size_t malloc_size(const void *p) { return malloc_usable_size((void*)p); /* fixme invalid pointer check? */ }
+
+// OSAtomic
+
+static __inline BOOL OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
+{
+  // fixme barrier is overkill
+  return __sync_bool_compare_and_swap(dst, newl, oldl);
+}
+
+static __inline BOOL OSAtomicCompareAndSwapPtr(void *oldp, void *newp, void * volatile *dst)
+{
+  // really??????
+  return __sync_bool_compare_and_swap(dst, newp, oldp);
+}
+
+static __inline BOOL OSAtomicCompareAndSwapPtrBarrier(void *oldp, void *newp, void * volatile *dst)
+{
+  return __sync_bool_compare_and_swap(dst, newp, oldp);
+}
+
+static __inline BOOL OSAtomicCompareAndSwap32Barrier(int32_t oldl, int32_t newl, int32_t volatile *dst)
+{
+  return __sync_bool_compare_and_swap(dst, newl, oldl);
+}
+
+static __inline int32_t OSAtomicDecrement32Barrier(volatile int32_t *dst)
+{
+  return __sync_fetch_and_sub(dst, 1);
+}
+
+static __inline int32_t OSAtomicIncrement32Barrier(volatile int32_t *dst)
+{
+  return __sync_fetch_and_add(dst, 1);
+}
+
+static __inline int32_t OSAtomicOr32Barrier(uint32_t theMask, volatile uint32_t *theValue)
+{
+  return __sync_fetch_and_or(theValue, theMask);
+}
+
+static __inline int32_t OSAtomicXor32Barrier(uint32_t theMask, volatile uint32_t *theValue)
+{
+  return __sync_fetch_and_xor(theValue, theMask);
+}
+
+
+
+
+static ALWAYS_INLINE
+uintptr_t
+LoadExclusive(uintptr_t *src)
+{
+  return *src;
+}
+
+static ALWAYS_INLINE
+bool
+StoreExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
+{
+
+  return __sync_bool_compare_and_swap((void **)dst, (void *)oldvalue, (void *)value);
+}
+
+static ALWAYS_INLINE
+bool
+StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
+{
+  return StoreExclusive(dst, oldvalue, value);
+}
+
+typedef struct mach_header headerType;
+typedef struct segment_command segmentType;
+typedef struct section sectionType;
+
+typedef pthread_mutex_t mutex_t;
+#define MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER;
+
+static inline int _mutex_lock_nodebug(mutex_t *m) {
+  return pthread_mutex_lock(m);
+}
+static inline bool _mutex_try_lock_nodebug(mutex_t *m) {
+  return !pthread_mutex_trylock(m);
+}
+static inline int _mutex_unlock_nodebug(mutex_t *m) {
+  return pthread_mutex_unlock(m);
+}
+
+
+typedef struct {
+  pthread_mutex_t *mutex;
+} recursive_mutex_t;
+#define RECURSIVE_MUTEX_INITIALIZER {0};
+#define RECURSIVE_MUTEX_NOT_LOCKED EPERM
+extern void recursive_mutex_init(recursive_mutex_t *m);
+
+static inline int _recursive_mutex_lock_nodebug(recursive_mutex_t *m) {
+  assert(m->mutex);
+  return pthread_mutex_lock(m->mutex);
+}
+static inline bool _recursive_mutex_try_lock_nodebug(recursive_mutex_t *m) {
+  assert(m->mutex);
+  return !pthread_mutex_trylock(m->mutex);
+}
+static inline int _recursive_mutex_unlock_nodebug(recursive_mutex_t *m) {
+  assert(m->mutex);
+  return pthread_mutex_unlock(m->mutex);
+}
+
+
+typedef struct {
+  pthread_mutex_t mutex;
+  pthread_cond_t cond;
+} monitor_t;
+#define MONITOR_INITIALIZER { PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER }
+#define MONITOR_NOT_ENTERED EPERM
+
+static inline int monitor_init(monitor_t *c) {
+  int err = pthread_mutex_init(&c->mutex, NULL);
+  if (err) return err;
+  err = pthread_cond_init(&c->cond, NULL);
+  if (err) {
+    pthread_mutex_destroy(&c->mutex);
+    return err;
+  }
+  return 0;
+}
+static inline int _monitor_enter_nodebug(monitor_t *c) {
+  return pthread_mutex_lock(&c->mutex);
+}
+static inline int _monitor_exit_nodebug(monitor_t *c) {
+  return pthread_mutex_unlock(&c->mutex);
+}
+static inline int _monitor_wait_nodebug(monitor_t *c) {
+  return pthread_cond_wait(&c->cond, &c->mutex);
+}
+static inline int monitor_notify(monitor_t *c) {
+  return pthread_cond_signal(&c->cond);
+}
+static inline int monitor_notifyAll(monitor_t *c) {
+  return pthread_cond_broadcast(&c->cond);
+}
+
+
+/* Custom read-write lock
+- reader is atomic add/subtract
+- writer is pthread mutex plus atomic add/subtract
+- fairness: new readers wait if a writer wants in
+- fairness: when writer completes, readers (probably) precede new writer
+
+state: xxxxxxxx xxxxxxxx yyyyyyyy yyyyyyyz
+x: blocked reader count
+y: active reader count
+z: readers allowed flag
+*/
+typedef struct {
+  pthread_rwlock_t rwl;
+} rwlock_t;
+
+static inline void rwlock_init(rwlock_t *l)
+{
+  int err __unused = pthread_rwlock_init(&l->rwl, NULL);
+  assert(err == 0);
+}
+
+static inline void _rwlock_read_nodebug(rwlock_t *l)
+{
+  int err __unused = pthread_rwlock_rdlock(&l->rwl);
+  assert(err == 0);
+}
+
+static inline void _rwlock_unlock_read_nodebug(rwlock_t *l)
+{
+  int err __unused = pthread_rwlock_unlock(&l->rwl);
+  assert(err == 0);
+}
+
+
+static inline bool _rwlock_try_read_nodebug(rwlock_t *l)
+{
+  int err = pthread_rwlock_tryrdlock(&l->rwl);
+  assert(err == 0  ||  err == EBUSY);
+  return (err == 0);
+}
+
+
+static inline void _rwlock_write_nodebug(rwlock_t *l)
+{
+  int err __unused = pthread_rwlock_wrlock(&l->rwl);
+  assert(err == 0);
+}
+
+static inline void _rwlock_unlock_write_nodebug(rwlock_t *l)
+{
+  int err __unused = pthread_rwlock_unlock(&l->rwl);
+  assert(err == 0);
+}
+
+static inline bool _rwlock_try_write_nodebug(rwlock_t *l)
+{
+  int err = pthread_rwlock_trywrlock(&l->rwl);
+  assert(err == 0  ||  err == EBUSY);
+  return (err == 0);
+}
+
+typedef struct {
+  int key;
+  void (*dtor)(void *);
+} tls_key_t;
+static __inline tls_key_t tls_create(void (*dtor)(void*)) {
+  tls_key_t k;
+#warning "k.key = TlsAlloc();""
+  k.key = 0;
+  k.dtor = dtor;
+  return k;
+}
+static __inline void *tls_get(tls_key_t k) {
+  #warning "tls???"
+  return NULL;
+}
+static __inline void tls_set(tls_key_t k, void *value) {
+  #warning "tls???"
+}
+
 
 
 #else
