@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 1999-2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 /***********************************************************************
@@ -29,30 +29,30 @@
 
 /***********************************************************************
  * Lazy method list arrays and method list locking  (2004-10-19)
- * 
+ *
  * cls->methodLists may be in one of three forms:
  * 1. nil: The class has no methods.
- * 2. non-nil, with CLS_NO_METHOD_ARRAY set: cls->methodLists points 
+ * 2. non-nil, with CLS_NO_METHOD_ARRAY set: cls->methodLists points
  *    to a single method list, which is the class's only method list.
- * 3. non-nil, with CLS_NO_METHOD_ARRAY clear: cls->methodLists points to 
- *    an array of method list pointers. The end of the array's block 
- *    is set to -1. If the actual number of method lists is smaller 
+ * 3. non-nil, with CLS_NO_METHOD_ARRAY clear: cls->methodLists points to
+ *    an array of method list pointers. The end of the array's block
+ *    is set to -1. If the actual number of method lists is smaller
  *    than that, the rest of the array is nil.
- * 
- * Attaching categories and adding and removing classes may change 
- * the form of the class list. In addition, individual method lists 
+ *
+ * Attaching categories and adding and removing classes may change
+ * the form of the class list. In addition, individual method lists
  * may be reallocated when fixed up.
  *
- * Classes are initially read as #1 or #2. If a category is attached 
- * or other methods added, the class is changed to #3. Once in form #3, 
+ * Classes are initially read as #1 or #2. If a category is attached
+ * or other methods added, the class is changed to #3. Once in form #3,
  * the class is never downgraded to #1 or #2, even if methods are removed.
  * Classes added with objc_addClass are initially either #1 or #3.
- * 
- * Accessing and manipulating a class's method lists are synchronized, 
- * to prevent races when one thread restructures the list. However, 
- * if the class is not yet in use (i.e. not in class_hash), then the 
+ *
+ * Accessing and manipulating a class's method lists are synchronized,
+ * to prevent races when one thread restructures the list. However,
+ * if the class is not yet in use (i.e. not in class_hash), then the
  * thread loading the class may access its method lists without locking.
- * 
+ *
  * The following functions acquire methodListLock:
  * class_getInstanceMethod
  * class_getClassMethod
@@ -64,7 +64,7 @@
  * lookupMethodInClassAndLoadCache
  * _objc_add_category_flush_caches
  *
- * The following functions don't acquire methodListLock because they 
+ * The following functions don't acquire methodListLock because they
  * only access method lists during class load and unload:
  * _objc_register_category
  * _resolve_categories_for_class (calls _objc_add_category)
@@ -74,14 +74,14 @@
  *
  * The following functions use method lists without holding methodListLock.
  * The caller must either hold methodListLock, or be loading the class.
- * _getMethod (called by class_getInstanceMethod, class_getClassMethod, 
+ * _getMethod (called by class_getInstanceMethod, class_getClassMethod,
  *   and class_respondsToMethod)
- * _findMethodInClass (called by _class_lookupMethodAndLoadCache, 
+ * _findMethodInClass (called by _class_lookupMethodAndLoadCache,
  *   lookupMethodInClassAndLoadCache, _getMethod)
  * _findMethodInList (called by _findMethodInClass)
  * nextMethodList (called by _findMethodInClass and class_nextMethodList
  * fixupSelectorsInMethodList (called by nextMethodList)
- * _objc_add_category (called by _objc_add_category_flush_caches, 
+ * _objc_add_category (called by _objc_add_category_flush_caches,
  *   resolve_categories_for_class and _objc_register_category)
  * _objc_insertMethods (called by class_addMethods and _objc_add_category)
  * _objc_removeMethods (called by class_removeMethods)
@@ -92,30 +92,30 @@
 
 /***********************************************************************
  * Thread-safety of class info bits  (2004-10-19)
- * 
- * Some class info bits are used to store mutable runtime state. 
- * Modifications of the info bits at particular times need to be 
+ *
+ * Some class info bits are used to store mutable runtime state.
+ * Modifications of the info bits at particular times need to be
  * synchronized to prevent races.
- * 
+ *
  * Three thread-safe modification functions are provided:
  * cls->setInfo()     // atomically sets some bits
  * cls->clearInfo()   // atomically clears some bits
  * cls->changeInfo()  // atomically sets some bits and clears others
  * These replace CLS_SETINFO() for the multithreaded cases.
- * 
+ *
  * Three modification windows are defined:
  * - compile time
  * - class construction or image load (before +load) in one thread
  * - multi-threaded messaging and method caches
- * 
- * Info bit modification at compile time and class construction do not 
+ *
+ * Info bit modification at compile time and class construction do not
  *   need to be locked, because only one thread is manipulating the class.
- * Info bit modification during messaging needs to be locked, because 
- *   there may be other threads simultaneously messaging or otherwise 
+ * Info bit modification during messaging needs to be locked, because
+ *   there may be other threads simultaneously messaging or otherwise
  *   manipulating the class.
- *   
+ *
  * Modification windows for each flag:
- * 
+ *
  * CLS_CLASS: compile-time and class load
  * CLS_META: compile-time and class load
  * CLS_INITIALIZED: +initialize
@@ -132,18 +132,18 @@
  * CLS_HAS_CXX_STRUCTORS: compile-time and class load
  * CLS_NO_METHOD_ARRAY: class load and messaging
  * CLS_HAS_LOAD_METHOD: class load
- * 
- * CLS_INITIALIZED and CLS_INITIALIZING have additional thread-safety 
- * constraints to support thread-safe +initialize. See "Thread safety 
+ *
+ * CLS_INITIALIZED and CLS_INITIALIZING have additional thread-safety
+ * constraints to support thread-safe +initialize. See "Thread safety
  * during class initialization" for details.
- * 
- * CLS_JAVA_HYBRID and CLS_JAVA_CLASS are set immediately after JavaBridge 
- * calls objc_addClass(). The JavaBridge does not use an atomic update, 
- * but the modification counts as "class construction" unless some other 
- * thread quickly finds the class via the class list. This race is 
+ *
+ * CLS_JAVA_HYBRID and CLS_JAVA_CLASS are set immediately after JavaBridge
+ * calls objc_addClass(). The JavaBridge does not use an atomic update,
+ * but the modification counts as "class construction" unless some other
+ * thread quickly finds the class via the class list. This race is
  * small and unlikely in well-behaved code.
  *
- * Most info bits that may be modified during messaging are also never 
+ * Most info bits that may be modified during messaging are also never
  * read without a lock. There is no general read lock for the info bits.
  * CLS_INITIALIZED: classInitLock
  * CLS_FLUSH_CACHE: cacheUpdateLock
@@ -374,8 +374,8 @@ id object_getIvar(id obj, Ivar ivar)
 
 /***********************************************************************
 * object_cxxDestructFromClass.
-* Call C++ destructors on obj, starting with cls's 
-*   dtor method (if any) followed by superclasses' dtors (if any), 
+* Call C++ destructors on obj, starting with cls's
+*   dtor method (if any) followed by superclasses' dtors (if any),
 *   stopping at cls's dtor (if any).
 * Uses methodListLock and cacheUpdateLock. The caller must hold neither.
 **********************************************************************/
@@ -386,12 +386,12 @@ static void object_cxxDestructFromClass(id obj, Class cls)
     // Call cls's dtor first, then superclasses's dtors.
 
     for ( ; cls; cls = cls->superclass) {
-        if (!cls->hasCxxDtor()) return; 
+        if (!cls->hasCxxDtor()) return;
         dtor = (void(*)(id))
             lookupMethodInClassAndLoadCache(cls, SEL_cxx_destruct);
         if (dtor != (void(*)(id))_objc_msgForward_impcache) {
             if (PrintCxxCtors) {
-                _objc_inform("CXX: calling C++ destructors for class %s", 
+                _objc_inform("CXX: calling C++ destructors for class %s",
                              cls->nameForLogging());
             }
             (*dtor)(obj);
@@ -415,12 +415,12 @@ void object_cxxDestruct(id obj)
 
 /***********************************************************************
 * object_cxxConstructFromClass.
-* Recursively call C++ constructors on obj, starting with base class's 
-*   ctor method (if any) followed by subclasses' ctors (if any), stopping 
+* Recursively call C++ constructors on obj, starting with base class's
+*   ctor method (if any) followed by subclasses' ctors (if any), stopping
 *   at cls's ctor (if any).
 * Does not check cls->hasCxxCtor(). The caller should preflight that.
 * Returns self if construction succeeded.
-* Returns nil if some constructor threw an exception. The exception is 
+* Returns nil if some constructor threw an exception. The exception is
 *   caught and discarded. Any partial construction is destructed.
 * Uses methodListLock and cacheUpdateLock. The caller must hold neither.
 *
@@ -428,7 +428,7 @@ void object_cxxDestruct(id obj)
 * return self: construction succeeded
 * return nil:  construction failed because a C++ constructor threw an exception
 **********************************************************************/
-id 
+id
 object_cxxConstructFromClass(id obj, Class cls)
 {
     assert(cls->hasCxxCtor());  // required for performance, not correctness
@@ -447,15 +447,15 @@ object_cxxConstructFromClass(id obj, Class cls)
     // Find this class's ctor, if any.
     ctor = (id(*)(id))lookupMethodInClassAndLoadCache(cls, SEL_cxx_construct);
     if (ctor == (id(*)(id))_objc_msgForward_impcache) return obj;  // no ctor - ok
-    
+
     // Call this class's ctor.
     if (PrintCxxCtors) {
-        _objc_inform("CXX: calling C++ constructors for class %s", 
+        _objc_inform("CXX: calling C++ constructors for class %s",
                      cls->nameForLogging());
     }
     if ((*ctor)(obj)) return obj;  // ctor called and succeeded - ok
 
-    // This class's ctor was called and failed. 
+    // This class's ctor was called and failed.
     // Call superclasses's dtors to clean up.
     if (supercls) object_cxxDestructFromClass(obj, supercls);
     return nil;
@@ -472,35 +472,35 @@ static void _class_resolveClassMethod(Class cls, SEL sel, id inst)
 {
     assert(cls->isMetaClass());
 
-    if (! lookUpImpOrNil(cls, SEL_resolveClassMethod, inst, 
-                         NO/*initialize*/, YES/*cache*/, NO/*resolver*/)) 
+    if (! lookUpImpOrNil(cls, SEL_resolveClassMethod, inst,
+                         NO/*initialize*/, YES/*cache*/, NO/*resolver*/))
     {
         // Resolver not implemented.
         return;
     }
 
-    BOOL (*msg)(Class, SEL, SEL) = (typeof(msg))objc_msgSend;
-    BOOL resolved = msg(_class_getNonMetaClass(cls, inst), 
+    BOOL (*msg)(Class, SEL, SEL) = (BOOL (*)(Class, SEL, SEL))objc_msgSend;
+    BOOL resolved = msg(_class_getNonMetaClass(cls, inst),
                         SEL_resolveClassMethod, sel);
 
     // Cache the result (good or bad) so the resolver doesn't fire next time.
     // +resolveClassMethod adds to self->ISA() a.k.a. cls
-    IMP imp = lookUpImpOrNil(cls, sel, inst, 
+    IMP imp = lookUpImpOrNil(cls, sel, inst,
                              NO/*initialize*/, YES/*cache*/, NO/*resolver*/);
 
     if (resolved  &&  PrintResolving) {
         if (imp) {
             _objc_inform("RESOLVE: method %c[%s %s] "
-                         "dynamically resolved to %p", 
-                         cls->isMetaClass() ? '+' : '-', 
+                         "dynamically resolved to %p",
+                         cls->isMetaClass() ? '+' : '-',
                          cls->nameForLogging(), sel_getName(sel), imp);
         }
         else {
             // Method resolver didn't add anything?
             _objc_inform("RESOLVE: +[%s resolveClassMethod:%s] returned YES"
                          ", but no new implementation of %c[%s %s] was found",
-                         cls->nameForLogging(), sel_getName(sel), 
-                         cls->isMetaClass() ? '+' : '-', 
+                         cls->nameForLogging(), sel_getName(sel),
+                         cls->isMetaClass() ? '+' : '-',
                          cls->nameForLogging(), sel_getName(sel));
         }
     }
@@ -515,34 +515,34 @@ static void _class_resolveClassMethod(Class cls, SEL sel, id inst)
 **********************************************************************/
 static void _class_resolveInstanceMethod(Class cls, SEL sel, id inst)
 {
-    if (! lookUpImpOrNil(cls->ISA(), SEL_resolveInstanceMethod, cls, 
-                         NO/*initialize*/, YES/*cache*/, NO/*resolver*/)) 
+    if (! lookUpImpOrNil(cls->ISA(), SEL_resolveInstanceMethod, cls,
+                         NO/*initialize*/, YES/*cache*/, NO/*resolver*/))
     {
         // Resolver not implemented.
         return;
     }
 
-    BOOL (*msg)(Class, SEL, SEL) = (typeof(msg))objc_msgSend;
+    BOOL (*msg)(Class, SEL, SEL) = (BOOL (*)(Class, SEL, SEL))objc_msgSend;
     BOOL resolved = msg(cls, SEL_resolveInstanceMethod, sel);
 
     // Cache the result (good or bad) so the resolver doesn't fire next time.
     // +resolveInstanceMethod adds to self a.k.a. cls
-    IMP imp = lookUpImpOrNil(cls, sel, inst, 
+    IMP imp = lookUpImpOrNil(cls, sel, inst,
                              NO/*initialize*/, YES/*cache*/, NO/*resolver*/);
 
     if (resolved  &&  PrintResolving) {
         if (imp) {
             _objc_inform("RESOLVE: method %c[%s %s] "
-                         "dynamically resolved to %p", 
-                         cls->isMetaClass() ? '+' : '-', 
+                         "dynamically resolved to %p",
+                         cls->isMetaClass() ? '+' : '-',
                          cls->nameForLogging(), sel_getName(sel), imp);
         }
         else {
             // Method resolver didn't add anything?
             _objc_inform("RESOLVE: +[%s resolveInstanceMethod:%s] returned YES"
                          ", but no new implementation of %c[%s %s] was found",
-                         cls->nameForLogging(), sel_getName(sel), 
-                         cls->isMetaClass() ? '+' : '-', 
+                         cls->nameForLogging(), sel_getName(sel),
+                         cls->isMetaClass() ? '+' : '-',
                          cls->nameForLogging(), sel_getName(sel));
         }
     }
@@ -560,13 +560,13 @@ void _class_resolveMethod(Class cls, SEL sel, id inst)
     if (! cls->isMetaClass()) {
         // try [cls resolveInstanceMethod:sel]
         _class_resolveInstanceMethod(cls, sel, inst);
-    } 
+    }
     else {
         // try [nonMetaClass resolveClassMethod:sel]
         // and [cls resolveInstanceMethod:sel]
         _class_resolveClassMethod(cls, sel, inst);
-        if (!lookUpImpOrNil(cls, sel, inst, 
-                            NO/*initialize*/, YES/*cache*/, NO/*resolver*/)) 
+        if (!lookUpImpOrNil(cls, sel, inst,
+                            NO/*initialize*/, YES/*cache*/, NO/*resolver*/))
         {
             _class_resolveInstanceMethod(cls, sel, inst);
         }
@@ -613,7 +613,7 @@ Ivar class_getClassVariable(Class cls, const char *name)
 * Tell gdb that a class changed. Currently used for OBJC2 ivar layouts only
 * Does nothing; gdb sets a breakpoint on it.
 **********************************************************************/
-BREAKPOINT_FUNCTION( 
+BREAKPOINT_FUNCTION(
     void gdb_objc_class_changed(Class cls, unsigned long changes, const char *classname)
 );
 
@@ -645,7 +645,7 @@ BOOL class_respondsToSelector_inst(Class cls, SEL sel, id inst)
 
     // Avoids +initialize because it historically did so.
     // We're not returning a callable IMP anyway.
-    imp = lookUpImpOrNil(cls, sel, inst, 
+    imp = lookUpImpOrNil(cls, sel, inst,
                          NO/*initialize*/, YES/*cache*/, YES/*resolver*/);
     return imp ? YES : NO;
 }
@@ -653,7 +653,7 @@ BOOL class_respondsToSelector_inst(Class cls, SEL sel, id inst)
 
 /***********************************************************************
 * class_getMethodImplementation.
-* Returns the IMP that would be invoked if [obj sel] were sent, 
+* Returns the IMP that would be invoked if [obj sel] were sent,
 * where obj is an instance of class cls.
 **********************************************************************/
 IMP class_lookupMethod(Class cls, SEL sel)
@@ -674,7 +674,7 @@ IMP class_getMethodImplementation(Class cls, SEL sel)
 
     if (!cls  ||  !sel) return nil;
 
-    imp = lookUpImpOrNil(cls, sel, nil, 
+    imp = lookUpImpOrNil(cls, sel, nil,
                          YES/*initialize*/, YES/*cache*/, YES/*resolver*/);
 
     // Translate forwarding function to C-callable external version
@@ -702,7 +702,7 @@ IMP class_getMethodImplementation_stret(Class cls, SEL sel)
 /***********************************************************************
 * instrumentObjcMessageSends
 **********************************************************************/
-#if !SUPPORT_MESSAGE_LOGGING
+#if !SUPPORT_MESSAGE_LOGGING || TARGET_OS_EMSCRIPTEN
 
 void	instrumentObjcMessageSends(BOOL flag)
 {
@@ -782,12 +782,12 @@ void instrumentObjcMessageSends(BOOL flag)
 * _free_internal
 * Convenience functions for the internal malloc zone.
 **********************************************************************/
-void *_malloc_internal(size_t size) 
+void *_malloc_internal(size_t size)
 {
     return malloc_zone_malloc(_objc_internal_zone(), size);
 }
 
-void *_calloc_internal(size_t count, size_t size) 
+void *_calloc_internal(size_t count, size_t size)
 {
     return malloc_zone_calloc(_objc_internal_zone(), count, size);
 }
@@ -840,7 +840,7 @@ void _free_internal(void *ptr)
 size_t _malloc_size_internal(void *ptr)
 {
     malloc_zone_t *zone = _objc_internal_zone();
-    return zone->size(zone, ptr);
+    return malloc_size(zone);
 }
 
 Class _calloc_class(size_t size)
@@ -893,7 +893,7 @@ char * method_copyReturnType(Method m)
 }
 
 
-void method_getArgumentType(Method m, unsigned int index, 
+void method_getArgumentType(Method m, unsigned int index,
                             char *dst, size_t dst_len)
 {
     encoding_getArgumentType(method_getTypeEncoding(m),
@@ -937,11 +937,11 @@ _objc_constructOrFree(id bytes, Class cls)
 * _class_createInstancesFromZone
 * Batch-allocating version of _class_createInstanceFromZone.
 * Attempts to allocate num_requested objects, each with extraBytes.
-* Returns the number of allocated objects (possibly zero), with 
+* Returns the number of allocated objects (possibly zero), with
 * the allocated pointers in *results.
 **********************************************************************/
 unsigned
-_class_createInstancesFromZone(Class cls, size_t extraBytes, void *zone, 
+_class_createInstancesFromZone(Class cls, size_t extraBytes, void *zone,
                                id *results, unsigned num_requested)
 {
     unsigned num_allocated;
@@ -951,16 +951,19 @@ _class_createInstancesFromZone(Class cls, size_t extraBytes, void *zone,
 
 #if SUPPORT_GC
     if (UseGC) {
-        num_allocated = 
-            auto_zone_batch_allocate(gc_zone, size, AUTO_OBJECT_SCANNED, 0, 1, 
+        num_allocated =
+            auto_zone_batch_allocate(gc_zone, size, AUTO_OBJECT_SCANNED, 0, 1,
                                      (void**)results, num_requested);
-    } else 
+    } else
 #endif
     {
         unsigned i;
-        num_allocated = 
-            malloc_zone_batch_malloc((malloc_zone_t *)(zone ? zone : malloc_default_zone()), 
+        num_allocated = 0;
+#warning "No signature of malloc_zone_batch_malloc"
+/*
+            malloc_zone_batch_malloc((malloc_zone_t *)(zone ? zone : malloc_default_zone()),
                                      size, (void**)results, num_requested);
+*/
         for (i = 0; i < num_allocated; i++) {
             bzero(results[i], size);
         }
@@ -983,14 +986,14 @@ _class_createInstancesFromZone(Class cls, size_t extraBytes, void *zone,
         }
     }
 
-    return num_allocated - shift;    
+    return num_allocated - shift;
 }
 
 
 /***********************************************************************
 * inform_duplicate. Complain about duplicate class implementations.
 **********************************************************************/
-void 
+void
 inform_duplicate(const char *name, Class oldCls, Class cls)
 {
 #if TARGET_OS_WIN32
@@ -1017,7 +1020,7 @@ copyPropertyAttributeString(const objc_property_attribute_t *attrs,
     char *result;
     unsigned int i;
     if (count == 0) return strdup("");
-    
+
 #ifndef NDEBUG
     // debug build: sanitize input
     for (i = 0; i < count; i++) {
@@ -1060,7 +1063,7 @@ copyPropertyAttributeString(const objc_property_attribute_t *attrs,
 /*
   Property attribute string format:
 
-  - Comma-separated name-value pairs. 
+  - Comma-separated name-value pairs.
   - Name and value may not contain ,
   - Name may not contain "
   - Value may be empty
@@ -1077,12 +1080,12 @@ copyPropertyAttributeString(const objc_property_attribute_t *attrs,
     optional-value:   [^,]*
 
 */
-static unsigned int 
-iteratePropertyAttributes(const char *attrs, 
-                          BOOL (*fn)(unsigned int index, 
-                                     void *ctx1, void *ctx2, 
-                                     const char *name, size_t nlen, 
-                                     const char *value, size_t vlen), 
+static unsigned int
+iteratePropertyAttributes(const char *attrs,
+                          BOOL (*fn)(unsigned int index,
+                                     void *ctx1, void *ctx2,
+                                     const char *name, size_t nlen,
+                                     const char *value, size_t vlen),
                           void *ctx1, void *ctx2)
 {
     if (!attrs) return 0;
@@ -1103,7 +1106,7 @@ iteratePropertyAttributes(const char *attrs,
         assert(attrs <= attrsend);
         assert(start <= attrsend);
         assert(end <= attrsend);
-        
+
         // Skip empty attribute
         if (start == end) continue;
 
@@ -1137,8 +1140,8 @@ iteratePropertyAttributes(const char *attrs,
         valueStart = start;
         valueEnd = end;
 
-        BOOL more = (*fn)(attrcount, ctx1, ctx2, 
-                          nameStart, nameEnd-nameStart, 
+        BOOL more = (*fn)(attrcount, ctx1, ctx2,
+                          nameStart, nameEnd-nameStart,
                           valueStart, valueEnd-valueStart);
         attrcount++;
         if (!more) break;
@@ -1148,8 +1151,8 @@ iteratePropertyAttributes(const char *attrs,
 }
 
 
-static BOOL 
-copyOneAttribute(unsigned int index, void *ctxa, void *ctxs, 
+static BOOL
+copyOneAttribute(unsigned int index, void *ctxa, void *ctxs,
                  const char *name, size_t nlen, const char *value, size_t vlen)
 {
     objc_property_attribute_t **ap = (objc_property_attribute_t**)ctxa;
@@ -1162,21 +1165,21 @@ copyOneAttribute(unsigned int index, void *ctxa, void *ctxs,
     memcpy(s, name, nlen);
     s += nlen;
     *s++ = '\0';
-    
+
     a->value = s;
     memcpy(s, value, vlen);
     s += vlen;
     *s++ = '\0';
 
     a++;
-    
+
     *ap = a;
     *sp = s;
 
     return YES;
 }
 
-                 
+
 objc_property_attribute_t *
 copyPropertyAttributeList(const char *attrs, unsigned int *outCount)
 {
@@ -1196,12 +1199,12 @@ copyPropertyAttributeList(const char *attrs, unsigned int *outCount)
         if (*s == ',') attrcount++;
     }
 
-    size_t size = 
-        attrcount * sizeof(objc_property_attribute_t) + 
-        sizeof(objc_property_attribute_t) + 
-        strlen(attrs) + 
+    size_t size =
+        attrcount * sizeof(objc_property_attribute_t) +
+        sizeof(objc_property_attribute_t) +
+        strlen(attrs) +
         attrcount * 2;
-    objc_property_attribute_t *result = (objc_property_attribute_t *) 
+    objc_property_attribute_t *result = (objc_property_attribute_t *)
         calloc(size, 1);
 
     objc_property_attribute_t *ra = result;
@@ -1222,8 +1225,8 @@ copyPropertyAttributeList(const char *attrs, unsigned int *outCount)
 }
 
 
-static BOOL 
-findOneAttribute(unsigned int index, void *ctxa, void *ctxs, 
+static BOOL
+findOneAttribute(unsigned int index, void *ctxa, void *ctxs,
                  const char *name, size_t nlen, const char *value, size_t vlen)
 {
     const char *query = (char *)ctxa;

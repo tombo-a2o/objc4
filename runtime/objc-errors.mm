@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 1999-2003, 2005-2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 /*
@@ -55,7 +55,7 @@ void _objc_fatal(const char *fmt, ...)
     abort();
 }
 
-void __objc_error(id rcv, const char *fmt, ...) 
+void __objc_error(id rcv, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -65,7 +65,7 @@ void __objc_error(id rcv, const char *fmt, ...)
     abort();
 }
 
-void _objc_error(id rcv, const char *fmt, va_list args) 
+void _objc_error(id rcv, const char *fmt, va_list args)
 {
     _vcprintf(fmt, args);
 
@@ -74,8 +74,8 @@ void _objc_error(id rcv, const char *fmt, va_list args)
 
 #else
 
-#include <vproc_priv.h>
-#include <_simple.h>
+//#include <vproc_priv.h>
+//#include <_simple.h>
 
 OBJC_EXPORT void	(*_error)(id, const char *, va_list);
 
@@ -84,6 +84,7 @@ static void _objc_trap(void) __attribute__((noreturn));
 // Add "message" to any forthcoming crash log.
 static void _objc_crashlog(const char *message)
 {
+#if !TARGET_OS_EMSCRIPTEN
     char *newmsg;
 
 #if 0
@@ -113,18 +114,20 @@ static void _objc_crashlog(const char *message)
         // Strip trailing newline
         char *c = &newmsg[strlen(newmsg)-1];
         if (*c == '\n') *c = '\0';
-        
+
         if (oldmsg) free(oldmsg);
         CRSetCrashLogMessage(newmsg);
     }
 
     mutex_unlock(&crashlog_lock);
+#endif
 }
 
 // Returns true if logs should be sent to stderr as well as syslog.
 // Copied from CFUtilities.c
-static bool also_do_stderr(void) 
+static bool also_do_stderr(void)
 {
+#if !TARGET_OS_EMSCRIPTEN
     struct stat st;
     int ret = fstat(STDERR_FILENO, &st);
     if (ret < 0) return false;
@@ -136,14 +139,14 @@ static bool also_do_stderr(void)
     int64_t val = 0;
     vproc_swap_integer(NULL, VPROC_GSK_IS_MANAGED, NULL, &val);
     if (val) return false;
-    
+#endif
     return true;
 }
 
 // Print "message" to the console.
 static void _objc_syslog(const char *message)
 {
-    _simple_asl_log(ASL_LEVEL_ERR, nil, message);
+//    _simple_asl_log(ASL_LEVEL_ERR, nil, message);
 
     if (also_do_stderr()) {
         write(STDERR_FILENO, message, strlen(message));
@@ -158,13 +161,13 @@ __attribute__((noreturn))
 #else
 // used by ExceptionHandling.framework
 #endif
-void _objc_error(id self, const char *fmt, va_list ap) 
-{ 
+void _objc_error(id self, const char *fmt, va_list ap)
+{
     char *buf1;
     char *buf2;
 
     vasprintf(&buf1, fmt, ap);
-    asprintf(&buf2, "objc[%d]: %s: %s\n", 
+    asprintf(&buf2, "objc[%d]: %s: %s\n",
              getpid(), object_getClassName(self), buf1);
     _objc_syslog(buf2);
     _objc_crashlog(buf2);
@@ -175,13 +178,13 @@ void _objc_error(id self, const char *fmt, va_list ap)
 /*
  * this routine handles errors that involve an object (or class).
  */
-void __objc_error(id rcv, const char *fmt, ...) 
-{ 
-    va_list vp; 
+void __objc_error(id rcv, const char *fmt, ...)
+{
+    va_list vp;
 
-    va_start(vp,fmt); 
+    va_start(vp,fmt);
 #if !__OBJC2__
-    (*_error)(rcv, fmt, vp); 
+    (*_error)(rcv, fmt, vp);
 #endif
     _objc_error (rcv, fmt, vp);  /* In case (*_error)() returns. */
     va_end(vp);
@@ -193,11 +196,11 @@ void __objc_error(id rcv, const char *fmt, ...)
  */
 void _objc_fatal(const char *fmt, ...)
 {
-    va_list ap; 
+    va_list ap;
     char *buf1;
     char *buf2;
 
-    va_start(ap,fmt); 
+    va_start(ap,fmt);
     vasprintf(&buf1, fmt, ap);
     va_end (ap);
 
@@ -214,11 +217,11 @@ void _objc_fatal(const char *fmt, ...)
  */
 void _objc_inform(const char *fmt, ...)
 {
-    va_list ap; 
+    va_list ap;
     char *buf1;
     char *buf2;
 
-    va_start (ap,fmt); 
+    va_start (ap,fmt);
     vasprintf(&buf1, fmt, ap);
     va_end (ap);
 
@@ -230,17 +233,17 @@ void _objc_inform(const char *fmt, ...)
 }
 
 
-/* 
- * Like _objc_inform(), but prints the message only in any 
+/*
+ * Like _objc_inform(), but prints the message only in any
  * forthcoming crash log, not to the console.
  */
 void _objc_inform_on_crash(const char *fmt, ...)
 {
-    va_list ap; 
+    va_list ap;
     char *buf1;
     char *buf2;
 
-    va_start (ap,fmt); 
+    va_start (ap,fmt);
     vasprintf(&buf1, fmt, ap);
     va_end (ap);
 
@@ -252,16 +255,16 @@ void _objc_inform_on_crash(const char *fmt, ...)
 }
 
 
-/* 
+/*
  * Like calling both _objc_inform and _objc_inform_on_crash.
  */
 void _objc_inform_now_and_on_crash(const char *fmt, ...)
 {
-    va_list ap; 
+    va_list ap;
     char *buf1;
     char *buf2;
 
-    va_start (ap,fmt); 
+    va_start (ap,fmt);
     vasprintf(&buf1, fmt, ap);
     va_end (ap);
 
@@ -274,14 +277,14 @@ void _objc_inform_now_and_on_crash(const char *fmt, ...)
 }
 
 
-/* Kill the process in a way that generates a crash log. 
+/* Kill the process in a way that generates a crash log.
  * This is better than calling exit(). */
-static void _objc_trap(void) 
+static void _objc_trap(void)
 {
     __builtin_trap();
 }
 
-/* Try to keep _objc_warn_deprecated out of crash logs 
+/* Try to keep _objc_warn_deprecated out of crash logs
  * caused by _objc_trap(). rdar://4546883 */
 __attribute__((used))
 static void _objc_trap2(void)
@@ -292,7 +295,7 @@ static void _objc_trap2(void)
 #endif
 
 
-BREAKPOINT_FUNCTION( 
+BREAKPOINT_FUNCTION(
     void _objc_warn_deprecated(void)
 );
 

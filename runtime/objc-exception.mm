@@ -2,14 +2,14 @@
  * Copyright (c) 2002-2007 Apple Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -62,14 +62,14 @@ void objc_exception_set_functions(objc_exception_functions_t *table) {
  * The following functions are
  * synthesized by the compiler upon encountering language constructs
  */
- 
+
 void objc_exception_throw(id exception) {
     if (!xtab.throw_exc) {
         set_default_handlers();
     }
-    
+
     if (PrintExceptionThrow) {
-        _objc_inform("EXCEPTIONS: throwing %p (%s)", 
+        _objc_inform("EXCEPTIONS: throwing %p (%s)",
                      (void*)exception, object_getClassName(exception));
         void* callstack[500];
         int frameCount = backtrace(callstack, 500);
@@ -183,7 +183,7 @@ static void default_throw(id value) {
     _longjmp(led->buf, 1);
 #endif
 }
-    
+
 static void default_try_exit(void *led) {
     ThreadChainLink_t *chainLink = getChainLink();
     if (!chainLink || led != chainLink->topHandler) {
@@ -203,7 +203,7 @@ static id default_extract(void *localExceptionData) {
 static int default_match(Class exceptionClass, id exception) {
     //return [exception isKindOfClass:exceptionClass];
     Class cls;
-    for (cls = exception->getIsa(); nil != cls; cls = cls->superclass) 
+    for (cls = exception->getIsa(); nil != cls; cls = cls->superclass)
         if (cls == exceptionClass) return 1;
     return 0;
 }
@@ -240,7 +240,7 @@ void _destroyAltHandlerList(struct alt_handler_list *list)
 #include "objc-private.h"
 #include <objc/objc-exception.h>
 #include <objc/NSObject.h>
-#include <execinfo.h>
+//#include <execinfo.h>
 
 // unwind library types and functions
 // Mostly adapted from Itanium C++ ABI: Exception Handling
@@ -294,7 +294,7 @@ OBJC_EXTERN void *__cxa_current_exception_type(void);
 #   define CXX_PERSONALITY __gxx_personality_sj0
 #endif
 
-OBJC_EXTERN _Unwind_Reason_Code 
+OBJC_EXTERN _Unwind_Reason_Code
 CXX_PERSONALITY(int version,
                 _Unwind_Action actions,
                 uint64_t exceptionClass,
@@ -318,25 +318,25 @@ struct objc_exception {
 };
 
 
-static void _objc_exception_noop(void) { } 
-static bool _objc_exception_false(void) { return 0; } 
-// static bool _objc_exception_true(void) { return 1; } 
-static void _objc_exception_abort1(void) { 
-    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 1); 
-} 
-static void _objc_exception_abort2(void) { 
-    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 2); 
-} 
-static void _objc_exception_abort3(void) { 
-    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 3); 
-} 
-static void _objc_exception_abort4(void) { 
-    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 4); 
-} 
+static void _objc_exception_noop(void) { }
+static bool _objc_exception_false(void) { return 0; }
+// static bool _objc_exception_true(void) { return 1; }
+static void _objc_exception_abort1(void) {
+    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 1);
+}
+static void _objc_exception_abort2(void) {
+    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 2);
+}
+static void _objc_exception_abort3(void) {
+    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 3);
+}
+static void _objc_exception_abort4(void) {
+    _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 4);
+}
 
-static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo, 
-                                     struct objc_typeinfo *throw_tinfo, 
-                                     void **throw_obj_p, 
+static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo,
+                                     struct objc_typeinfo *throw_tinfo,
+                                     void **throw_obj_p,
                                      unsigned outer);
 
 // forward declaration
@@ -344,7 +344,7 @@ OBJC_EXPORT struct objc_typeinfo OBJC_EHTYPE_id;
 
 OBJC_EXPORT
 const void *objc_ehtype_vtable[] = {
-    nil,  // typeinfo's vtable? - fixme 
+    nil,  // typeinfo's vtable? - fixme
     (void*)&OBJC_EHTYPE_id,  // typeinfo's typeinfo - hack
     (void*)_objc_exception_noop,      // in-place destructor?
     (void*)_objc_exception_noop,      // destructor?
@@ -361,8 +361,8 @@ const void *objc_ehtype_vtable[] = {
 
 OBJC_EXPORT
 struct objc_typeinfo OBJC_EHTYPE_id = {
-    objc_ehtype_vtable+2, 
-    "id", 
+    objc_ehtype_vtable+2,
+    "id",
     nil
 };
 
@@ -391,7 +391,7 @@ static int _objc_default_exception_matcher(Class catch_cls, id exception)
 {
     Class cls;
     for (cls = exception->getIsa();
-         cls != nil; 
+         cls != nil;
          cls = cls->superclass)
     {
         if (cls == catch_cls) return 1;
@@ -414,8 +414,8 @@ static objc_uncaught_exception_handler uncaught_handler = _objc_default_uncaught
 
 /***********************************************************************
 * objc_setExceptionPreprocessor
-* Set a handler for preprocessing Objective-C exceptions. 
-* Returns the previous handler. 
+* Set a handler for preprocessing Objective-C exceptions.
+* Returns the previous handler.
 **********************************************************************/
 objc_exception_preprocessor
 objc_setExceptionPreprocessor(objc_exception_preprocessor fn)
@@ -428,8 +428,8 @@ objc_setExceptionPreprocessor(objc_exception_preprocessor fn)
 
 /***********************************************************************
 * objc_setExceptionMatcher
-* Set a handler for matching Objective-C exceptions. 
-* Returns the previous handler. 
+* Set a handler for matching Objective-C exceptions.
+* Returns the previous handler.
 **********************************************************************/
 objc_exception_matcher
 objc_setExceptionMatcher(objc_exception_matcher fn)
@@ -442,10 +442,10 @@ objc_setExceptionMatcher(objc_exception_matcher fn)
 
 /***********************************************************************
 * objc_setUncaughtExceptionHandler
-* Set a handler for uncaught Objective-C exceptions. 
-* Returns the previous handler. 
+* Set a handler for uncaught Objective-C exceptions.
+* Returns the previous handler.
 **********************************************************************/
-objc_uncaught_exception_handler 
+objc_uncaught_exception_handler
 objc_setUncaughtExceptionHandler(objc_uncaught_exception_handler fn)
 {
     objc_uncaught_exception_handler result = uncaught_handler;
@@ -460,20 +460,20 @@ objc_setUncaughtExceptionHandler(objc_uncaught_exception_handler fn)
 
 static void call_alt_handlers(struct _Unwind_Context *ctx);
 
-_Unwind_Reason_Code 
+_Unwind_Reason_Code
 __objc_personality_v0(int version,
                       _Unwind_Action actions,
                       uint64_t exceptionClass,
                       struct _Unwind_Exception *exceptionObject,
                       struct _Unwind_Context *context)
 {
-    BOOL unwinding = ((actions & _UA_CLEANUP_PHASE)  ||  
+    BOOL unwinding = ((actions & _UA_CLEANUP_PHASE)  ||
                       (actions & _UA_FORCE_UNWIND));
 
     if (PrintExceptions) {
         _objc_inform("EXCEPTIONS: %s through frame [ip=%p sp=%p] "
-                     "for exception %p", 
-                     unwinding ? "unwinding" : "searching", 
+                     "for exception %p",
+                     unwinding ? "unwinding" : "searching",
                      (void*)(_Unwind_GetIP(context)-1),
                      (void*)_Unwind_GetCFA(context), exceptionObject);
     }
@@ -484,7 +484,7 @@ __objc_personality_v0(int version,
     }
 
     // Let C++ handle the unwind itself.
-    return CXX_PERSONALITY(version, actions, exceptionClass, 
+    return CXX_PERSONALITY(version, actions, exceptionClass,
                            exceptionObject, context);
 }
 
@@ -493,7 +493,7 @@ __objc_personality_v0(int version,
 * Compiler ABI
 **********************************************************************/
 
-static void _objc_exception_destructor(void *exc_gen) 
+static void _objc_exception_destructor(void *exc_gen)
 {
     // Release the retain from objc_exception_throw().
 
@@ -501,7 +501,7 @@ static void _objc_exception_destructor(void *exc_gen)
     id obj = exc->obj;
 
     if (PrintExceptions) {
-        _objc_inform("EXCEPTIONS: releasing completed exception %p (object %p, a %s)", 
+        _objc_inform("EXCEPTIONS: releasing completed exception %p (object %p, a %s)",
                      exc, obj, object_getClassName(obj));
     }
 
@@ -511,7 +511,7 @@ static void _objc_exception_destructor(void *exc_gen)
             auto_zone_release(gc_zone, exc->obj);
         }
     }
-    else 
+    else
 #endif
     {
         [obj release];
@@ -535,7 +535,7 @@ void objc_exception_throw(id obj)
             auto_zone_retain(gc_zone, obj);
         }
     }
-    else 
+    else
 #endif
     {
         [obj retain];
@@ -545,21 +545,21 @@ void objc_exception_throw(id obj)
     exc->tinfo.vtable = objc_ehtype_vtable+2;
     exc->tinfo.name = object_getClassName(obj);
     exc->tinfo.cls_unremapped = obj ? obj->getIsa() : Nil;
-
+/*
     if (PrintExceptions) {
-        _objc_inform("EXCEPTIONS: throwing %p (object %p, a %s)", 
+        _objc_inform("EXCEPTIONS: throwing %p (object %p, a %s)",
                      exc, (void*)obj, object_getClassName(obj));
     }
 
     if (PrintExceptionThrow) {
         if (!PrintExceptions)
-            _objc_inform("EXCEPTIONS: throwing %p (object %p, a %s)", 
+            _objc_inform("EXCEPTIONS: throwing %p (object %p, a %s)",
                          exc, (void*)obj, object_getClassName(obj));
         void* callstack[500];
         int frameCount = backtrace(callstack, 500);
         backtrace_symbols_fd(callstack, frameCount, fileno(stderr));
     }
-    
+*/
     OBJC_RUNTIME_OBJC_EXCEPTION_THROW(obj);  // dtrace probe to log throw activity
     __cxa_throw(exc, &exc->tinfo, &_objc_exception_destructor);
     __builtin_trap();
@@ -572,7 +572,7 @@ void objc_exception_rethrow(void)
     if (PrintExceptions) {
         _objc_inform("EXCEPTIONS: rethrowing current exception");
     }
-    
+
     OBJC_RUNTIME_OBJC_EXCEPTION_RETHROW(); // dtrace probe to log throw activity.
     __cxa_rethrow();
     __builtin_trap();
@@ -582,7 +582,7 @@ void objc_exception_rethrow(void)
 id objc_begin_catch(void *exc_gen)
 {
     if (PrintExceptions) {
-        _objc_inform("EXCEPTIONS: handling exception %p at %p", 
+        _objc_inform("EXCEPTIONS: handling exception %p at %p",
                      exc_gen, __builtin_return_address(0));
     }
     // NOT actually an id in the catch(...) case!
@@ -600,9 +600,9 @@ void objc_end_catch(void)
 
 
 // `outer` is not passed by the new libcxxabi
-static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo, 
-                                     struct objc_typeinfo *throw_tinfo, 
-                                     void **throw_obj_p, 
+static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo,
+                                     struct objc_typeinfo *throw_tinfo,
+                                     void **throw_obj_p,
                                      unsigned outer UNAVAILABLE_ATTRIBUTE)
 {
     id exception;
@@ -631,12 +631,12 @@ static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo,
         // catch handler's class is weak-linked and missing. Not a match.
     }
     else if ((*exception_matcher)(handler_cls, exception)) {
-        if (PrintExceptions) _objc_inform("EXCEPTIONS: catch(%s)", 
+        if (PrintExceptions) _objc_inform("EXCEPTIONS: catch(%s)",
                                           handler_cls->nameForLogging());
         return true;
     }
 
-    if (PrintExceptions) _objc_inform("EXCEPTIONS: skipping catch(%s)", 
+    if (PrintExceptions) _objc_inform("EXCEPTIONS: skipping catch(%s)",
                                       handler_cls->nameForLogging());
 
     return false;
@@ -647,7 +647,7 @@ static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo,
 * _objc_terminate
 * Custom std::terminate handler.
 *
-* The uncaught exception callback is implemented as a std::terminate handler. 
+* The uncaught exception callback is implemented as a std::terminate handler.
 * 1. Check if there's an active exception
 * 2. If so, check if it's an Objective-C exception
 * 3. If so, call our registered callback with the object.
@@ -683,8 +683,8 @@ static void _objc_terminate(void)
 /***********************************************************************
 * objc_terminate
 * Calls std::terminate for clients who don't link to C++ themselves.
-* Called by the compiler if an exception is thrown 
-* from a context where exceptions may not be thrown. 
+* Called by the compiler if an exception is thrown
+* from a context where exceptions may not be thrown.
 **********************************************************************/
 void objc_terminate(void)
 {
@@ -696,7 +696,7 @@ void objc_terminate(void)
 * alt handler support - zerocost implementation only
 **********************************************************************/
 
-#if !SUPPORT_ALT_HANDLERS
+#if !SUPPORT_ALT_HANDLERS || TARGET_OS_EMSCRIPTEN
 
 void _destroyAltHandlerList(struct alt_handler_list *list)
 {
@@ -782,11 +782,11 @@ static intptr_t read_sleb(uintptr_t *pp)
 * read_address
 * Reads an encoded address from the address stored in *pp.
 * Increments *pp past the bytes read.
-* The data is interpreted according to the given dwarf encoding 
+* The data is interpreted according to the given dwarf encoding
 * and base addresses.
 **********************************************************************/
-static uintptr_t read_address(uintptr_t *pp, 
-                              const struct dwarf_eh_bases *bases, 
+static uintptr_t read_address(uintptr_t *pp,
+                              const struct dwarf_eh_bases *bases,
                               unsigned char encoding)
 {
     uintptr_t result = 0;
@@ -833,7 +833,7 @@ static uintptr_t read_address(uintptr_t *pp,
         break;
 #endif
     default:
-        _objc_inform("unknown DWARF EH encoding 0x%x at %p", 
+        _objc_inform("unknown DWARF EH encoding 0x%x at %p",
                      encoding, (void *)*pp);
         break;
     }
@@ -856,7 +856,7 @@ static uintptr_t read_address(uintptr_t *pp,
             result += bases->func;
             break;
         case DW_EH_PE_aligned:
-            _objc_inform("unknown DWARF EH encoding 0x%x at %p", 
+            _objc_inform("unknown DWARF EH encoding 0x%x at %p",
                          encoding, (void *)*pp);
             break;
         default:
@@ -886,11 +886,11 @@ struct frame_range {
 };
 
 
-static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip, 
+static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip,
                                    const struct dwarf_eh_bases* bases,
                                    struct frame_range *frame)
 {
-    unsigned char LPStart_enc = *(const unsigned char *)lsda++;    
+    unsigned char LPStart_enc = *(const unsigned char *)lsda++;
 
     if (LPStart_enc != DW_EH_PE_omit) {
         read_address(&lsda, bases, LPStart_enc); // LPStart
@@ -923,7 +923,7 @@ static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip,
         if (ip < start) {
             // no more source ranges
             return false;
-        } 
+        }
         else if (ip < start + len) {
             // found the range
             if (!pad) return false;  // ...but it has no landing pad
@@ -933,9 +933,9 @@ static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip,
             try_end = start + len;
             try_landing_pad = pad;
             break;
-        }        
+        }
     }
-    
+
     if (!action_record) return false;  // no catch handlers
 
     // has handlers, destructors, and/or throws specifications
@@ -948,7 +948,7 @@ static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip,
         uintptr_t temp = p;
         offset = read_sleb(&temp);
         p += offset;
-        
+
         if (filter < 0) {
             // throws specification - ignore
         } else if (filter == 0) {
@@ -961,7 +961,7 @@ static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip,
     } while (offset);
 
     if (!has_handler) return false;
-    
+
     // Count the number of source ranges with the same landing pad as our match
     unsigned int range_count = 0;
     p = call_site_table;
@@ -970,7 +970,7 @@ static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip,
                 /*len*/    read_address(&p, bases, call_site_enc);
         uintptr_t pad    = read_address(&p, bases, call_site_enc);
                 /*action*/ read_uleb(&p);
-        
+
         if (pad == try_landing_pad) {
             range_count++;
         }
@@ -991,7 +991,7 @@ static bool isObjCExceptionCatcher(uintptr_t lsda, uintptr_t ip,
             uintptr_t len    = read_address(&p, bases, call_site_enc);
             uintptr_t pad    = read_address(&p, bases, call_site_enc);
                     /*action*/ read_uleb(&p);
-            
+
             if (pad == try_landing_pad) {
                 if (start < try_start) try_start = start;
                 if (start+len > try_end) try_end = start+len;
@@ -1016,7 +1016,7 @@ static struct frame_range findHandler(void)
 {
     // walk stack looking for frame with objc catch handler
     unw_context_t    uc;
-    unw_cursor_t    cursor; 
+    unw_cursor_t    cursor;
     unw_proc_info_t    info;
     unw_getcontext(&uc);
     unw_init_local(&cursor, &uc);
@@ -1048,7 +1048,7 @@ static struct frame_range findHandler(void)
 }
 
 
-// This data structure assumes the number of 
+// This data structure assumes the number of
 // active alt handlers per frame is small.
 
 // for OBJC_DEBUG_ALT_HANDLERS, record the call to objc_addExceptionHandler.
@@ -1133,7 +1133,7 @@ void _destroyAltHandlerList(struct alt_handler_list *list)
 
 
 uintptr_t objc_addExceptionHandler(objc_exception_handler fn, void *context)
-{ 
+{
     // Find the closest enclosing frame with objc catch handlers
     struct frame_range target_frame = findHandler();
     if (!target_frame.ip_start) {
@@ -1148,16 +1148,16 @@ uintptr_t objc_addExceptionHandler(objc_exception_handler fn, void *context)
     if (list->used == list->allocated) {
         list->allocated = list->allocated*2 ?: 4;
         list->handlers = (struct alt_handler_data *)
-            _realloc_internal(list->handlers, 
+            _realloc_internal(list->handlers,
                               list->allocated * sizeof(list->handlers[0]));
         bzero(&list->handlers[list->used], (list->allocated - list->used) * sizeof(list->handlers[0]));
         i = list->used;
     }
     else {
         for (i = 0; i < list->allocated; i++) {
-            if (list->handlers[i].frame.ip_start == 0  &&  
-                list->handlers[i].frame.ip_end == 0  &&  
-                list->handlers[i].frame.cfa == 0) 
+            if (list->handlers[i].frame.ip_start == 0  &&
+                list->handlers[i].frame.ip_end == 0  &&
+                list->handlers[i].frame.cfa == 0)
             {
                 break;
             }
@@ -1191,10 +1191,10 @@ uintptr_t objc_addExceptionHandler(objc_exception_handler fn, void *context)
         }
 
         pthread_getname_np(pthread_self(), data->debug->thread, THREADNAME_COUNT);
-        strlcpy(data->debug->queue, 
-                dispatch_queue_get_label(dispatch_get_current_queue()), 
+        strlcpy(data->debug->queue,
+                dispatch_queue_get_label(dispatch_get_current_queue()),
                 THREADNAME_COUNT);
-        data->debug->backtraceSize = 
+        data->debug->backtraceSize =
             backtrace(data->debug->backtrace, BACKTRACE_COUNT);
         data->debug->token = token;
 
@@ -1203,8 +1203,8 @@ uintptr_t objc_addExceptionHandler(objc_exception_handler fn, void *context)
 
     if (PrintAltHandlers) {
         _objc_inform("ALT HANDLERS: installing alt handler #%lu %p(%p) on "
-                     "frame [ip=%p..%p sp=%p]", (unsigned long)token, 
-                     data->fn, data->context, (void *)data->frame.ip_start, 
+                     "frame [ip=%p..%p sp=%p]", (unsigned long)token,
+                     data->fn, data->context, (void *)data->frame.ip_start,
                      (void *)data->frame.ip_end, (void *)data->frame.cfa);
         if (data->frame.ips) {
             unsigned int r = 0;
@@ -1213,7 +1213,7 @@ uintptr_t objc_addExceptionHandler(objc_exception_handler fn, void *context)
                 uintptr_t end = data->frame.ips[r].end;
                 r++;
                 if (start == 0  &&  end == 0) break;
-                _objc_inform("ALT HANDLERS:     ip=%p..%p", 
+                _objc_inform("ALT HANDLERS:     ip=%p..%p",
                              (void*)start, (void*)end);
             }
         }
@@ -1238,7 +1238,7 @@ void objc_removeExceptionHandler(uintptr_t token)
         // objc_addExceptionHandler failed
         return;
     }
-    
+
     struct alt_handler_list *list = fetch_handler_list(NO);
     if (!list  ||  !list->handlers) {
         // no alt handlers active
@@ -1247,7 +1247,7 @@ void objc_removeExceptionHandler(uintptr_t token)
     }
 
     uintptr_t i = token-1;
-    
+
     if (DebugAltHandlers) {
         // search for the token instead of using token-1
         for (i = 0; i < list->allocated; i++) {
@@ -1255,7 +1255,7 @@ void objc_removeExceptionHandler(uintptr_t token)
             if (data->debug  &&  data->debug->token == token) break;
         }
     }
-    
+
     if (i >= list->allocated) {
         // token out of range
         alt_handler_error(token);
@@ -1272,8 +1272,8 @@ void objc_removeExceptionHandler(uintptr_t token)
 
     if (PrintAltHandlers) {
         _objc_inform("ALT HANDLERS: removing   alt handler #%lu %p(%p) on "
-                     "frame [ip=%p..%p sp=%p]", (unsigned long)token, 
-                     data->fn, data->context, (void *)data->frame.ip_start, 
+                     "frame [ip=%p..%p sp=%p]", (unsigned long)token,
+                     data->fn, data->context, (void *)data->frame.ip_start,
                      (void *)data->frame.ip_end, (void *)data->frame.cfa);
     }
 
@@ -1310,8 +1310,8 @@ void alt_handler_error(uintptr_t token)
 
                 // Build a string from the recorded backtrace
                 char *symbolString;
-                char **symbols = 
-                    backtrace_symbols(data->debug->backtrace, 
+                char **symbols =
+                    backtrace_symbols(data->debug->backtrace,
                                       data->debug->backtraceSize);
                 size_t len = 1;
                 for (i = 0; i < data->debug->backtraceSize; i++){
@@ -1331,12 +1331,12 @@ void alt_handler_error(uintptr_t token)
                      "unknown alt handler; this is probably a bug in "
                      "multithreaded AppKit use. \n"
                      "The matching objc_addExceptionHandler() was called by:\n"
-                     "Thread '%s': Dispatch queue: '%s': \n%s", 
+                     "Thread '%s': Dispatch queue: '%s': \n%s",
                      data->debug->thread, data->debug->queue, symbolString);
 
                 pthread_mutex_unlock(&DebugLock);
                 _free_internal(symbolString);
-                
+
                 objc_alt_handler_error();
             }
         }
@@ -1363,13 +1363,13 @@ static void call_alt_handlers(struct _Unwind_Context *ctx)
     uintptr_t ip = _Unwind_GetIP(ctx) - 1;
     uintptr_t cfa = _Unwind_GetCFA(ctx);
     unsigned int i;
-    
+
     struct alt_handler_list *list = fetch_handler_list(NO);
     if (!list  ||  list->used == 0) return;
 
     for (i = 0; i < list->allocated; i++) {
         struct alt_handler_data *data = &list->handlers[i];
-        if (ip >= data->frame.ip_start  &&  ip < data->frame.ip_end  &&  data->frame.cfa == cfa) 
+        if (ip >= data->frame.ip_start  &&  ip < data->frame.ip_end  &&  data->frame.cfa == cfa)
         {
             if (data->frame.ips) {
                 unsigned int r = 0;
@@ -1383,23 +1383,23 @@ static void call_alt_handlers(struct _Unwind_Context *ctx)
                         break;
                     }
                     if (ip >= start  &&  ip < end) {
-                        found = true; 
+                        found = true;
                         break;
                     }
                 }
                 if (!found) continue;
             }
 
-            // Copy and clear before the callback, in case the 
+            // Copy and clear before the callback, in case the
             // callback manipulates the alt handler list.
             struct alt_handler_data copy = *data;
             bzero(data, sizeof(*data));
             list->used--;
             if (PrintExceptions || PrintAltHandlers) {
                 _objc_inform("EXCEPTIONS: calling alt handler %p(%p) from "
-                             "frame [ip=%p..%p sp=%p]", copy.fn, copy.context, 
-                             (void *)copy.frame.ip_start, 
-                             (void *)copy.frame.ip_end, 
+                             "frame [ip=%p..%p sp=%p]", copy.fn, copy.context,
+                             (void *)copy.frame.ip_start,
+                             (void *)copy.frame.ip_end,
                              (void *)copy.frame.cfa);
             }
             if (copy.fn) (*copy.fn)(nil, copy.context);

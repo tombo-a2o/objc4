@@ -43,7 +43,7 @@ task "other_headers" => other_headers do |t|
 end
 
 
-CC = "emcc"
+CC = "em++"
 INCLUDE = "-I./include -I./include/objc"
 COPTS = "-v -fblocks"
 CFLAGS="#{INCLUDE} #{COPTS}"

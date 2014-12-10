@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 1999-2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -34,29 +34,29 @@
 /***********************************************************************
  * Method cache locking (GrP 2001-1-14)
  *
- * For speed, objc_msgSend does not acquire any locks when it reads 
- * method caches. Instead, all cache changes are performed so that any 
- * objc_msgSend running concurrently with the cache mutator will not 
- * crash or hang or get an incorrect result from the cache. 
+ * For speed, objc_msgSend does not acquire any locks when it reads
+ * method caches. Instead, all cache changes are performed so that any
+ * objc_msgSend running concurrently with the cache mutator will not
+ * crash or hang or get an incorrect result from the cache.
  *
- * When cache memory becomes unused (e.g. the old cache after cache 
- * expansion), it is not immediately freed, because a concurrent 
- * objc_msgSend could still be using it. Instead, the memory is 
- * disconnected from the data structures and placed on a garbage list. 
- * The memory is now only accessible to instances of objc_msgSend that 
- * were running when the memory was disconnected; any further calls to 
- * objc_msgSend will not see the garbage memory because the other data 
+ * When cache memory becomes unused (e.g. the old cache after cache
+ * expansion), it is not immediately freed, because a concurrent
+ * objc_msgSend could still be using it. Instead, the memory is
+ * disconnected from the data structures and placed on a garbage list.
+ * The memory is now only accessible to instances of objc_msgSend that
+ * were running when the memory was disconnected; any further calls to
+ * objc_msgSend will not see the garbage memory because the other data
  * structures don't point to it anymore. The collecting_in_critical
- * function checks the PC of all threads and returns FALSE when all threads 
- * are found to be outside objc_msgSend. This means any call to objc_msgSend 
- * that could have had access to the garbage has finished or moved past the 
+ * function checks the PC of all threads and returns FALSE when all threads
+ * are found to be outside objc_msgSend. This means any call to objc_msgSend
+ * that could have had access to the garbage has finished or moved past the
  * cache lookup stage, so it is safe to free the memory.
  *
- * All functions that modify cache data or structures must acquire the 
+ * All functions that modify cache data or structures must acquire the
  * cacheUpdateLock to prevent interference from concurrent modifications.
- * The function that frees cache garbage must acquire the cacheUpdateLock 
+ * The function that frees cache garbage must acquire the cacheUpdateLock
  * and use collecting_in_critical() to flush out cache readers.
- * The cacheUpdateLock is also used to protect the custom allocator used 
+ * The cacheUpdateLock is also used to protect the custom allocator used
  * for large method cache blocks.
  *
  * Cache readers (PC-checked by collecting_in_critical())
@@ -146,7 +146,7 @@ static inline mask_t cache_next(mask_t i, mask_t mask) {
     return (i+1) & mask;
 }
 
-#elif __i386__  ||  __x86_64__  ||  __arm64__
+#elif __i386__  ||  __x86_64__  ||  __arm64__ || TARGET_OS_EMSCRIPTEN
 // objc_msgSend has lots of registers and/or memory operands available.
 // Cache scan decrements. No end marker needed.
 #define CACHE_END_MARKER 0
@@ -211,6 +211,9 @@ static inline mask_t cache_next(mask_t i, mask_t mask) {
              : /* no clobbers */                \
              )
 
+#elif TARGET_OS_EMSCRIPTEN
+#define mega_barrier()
+#warning "what is mega_barrier for?"
 #else
 #error unknown architecture
 #endif
@@ -219,18 +222,18 @@ static inline mask_t cache_next(mask_t i, mask_t mask) {
 // Class points to cache. SEL is key. Cache buckets store SEL+IMP.
 // Caches are never built in the dyld shared cache.
 
-static inline mask_t cache_hash(cache_key_t key, mask_t mask) 
+static inline mask_t cache_hash(cache_key_t key, mask_t mask)
 {
     return (mask_t)(key & mask);
 }
 
-cache_t *getCache(Class cls, SEL sel __unused) 
+cache_t *getCache(Class cls, SEL sel __unused)
 {
     assert(cls);
     return &cls->cache;
 }
 
-cache_key_t getKey(Class cls __unused, SEL sel) 
+cache_key_t getKey(Class cls __unused, SEL sel)
 {
     assert(sel);
     return (cache_key_t)sel;
@@ -244,7 +247,7 @@ void bucket_t::set(cache_key_t newKey, IMP newImp)
 {
     assert(_key == 0  ||  _key == newKey);
 
-    // LDP/STP guarantees that all observers get 
+    // LDP/STP guarantees that all observers get
     // either key/imp or newKey/newImp
     stp(newKey, newImp, this);
 }
@@ -252,11 +255,11 @@ void bucket_t::set(cache_key_t newKey, IMP newImp)
 void cache_t::setBucketsAndMask(struct bucket_t *newBuckets, mask_t newMask)
 {
     // ensure other threads see buckets contents before buckets pointer
-    // see Barrier Litmus Tests and Cookbook, 
+    // see Barrier Litmus Tests and Cookbook,
     // "Address Dependency with object construction"
     __sync_synchronize();
 
-    // LDP/STP guarantees that all observers get 
+    // LDP/STP guarantees that all observers get
     // old mask/buckets or new mask/buckets
 
     mask_t newOccupied = 0;
@@ -278,9 +281,9 @@ void bucket_t::set(cache_key_t newKey, IMP newImp)
     // (It will get a cache miss but not dispatch to the wrong place.)
     // It is unsafe for objc_msgSend to see old imp and new key.
     // Therefore we write new imp, wait a lot, then write new key.
-    
+
     _imp = newImp;
-    
+
     if (_key != newKey) {
         mega_barrier();
         _key = newKey;
@@ -300,10 +303,10 @@ void cache_t::setBucketsAndMask(struct bucket_t *newBuckets, mask_t newMask)
     mega_barrier();
 
     _buckets = newBuckets;
-    
+
     // ensure other threads see new buckets before new mask
     mega_barrier();
-    
+
     _mask = newMask;
     _occupied = 0;
 }
@@ -311,22 +314,22 @@ void cache_t::setBucketsAndMask(struct bucket_t *newBuckets, mask_t newMask)
 // not arm64
 #endif
 
-struct bucket_t *cache_t::buckets() 
+struct bucket_t *cache_t::buckets()
 {
-    return _buckets; 
+    return _buckets;
 }
 
-mask_t cache_t::mask() 
+mask_t cache_t::mask()
 {
-    return _mask; 
+    return _mask;
 }
 
-mask_t cache_t::occupied() 
+mask_t cache_t::occupied()
 {
     return _occupied;
 }
 
-void cache_t::incrementOccupied() 
+void cache_t::incrementOccupied()
 {
     _occupied++;
 }
@@ -338,21 +341,21 @@ void cache_t::setEmpty()
 }
 
 
-mask_t cache_t::capacity() 
+mask_t cache_t::capacity()
 {
-    return mask() ? mask()+1 : 0; 
+    return mask() ? mask()+1 : 0;
 }
 
 
 #if CACHE_END_MARKER
 
-size_t cache_t::bytesForCapacity(uint32_t cap) 
+size_t cache_t::bytesForCapacity(uint32_t cap)
 {
     // fixme put end marker inline when capacity+1 malloc is inefficient
     return sizeof(cache_t) * (cap + 1);
 }
 
-bucket_t *cache_t::endMarker(struct bucket_t *b, uint32_t cap) 
+bucket_t *cache_t::endMarker(struct bucket_t *b, uint32_t cap)
 {
     // bytesForCapacity() chooses whether the end marker is inline or not
     return (bucket_t *)((uintptr_t)b + bytesForCapacity(cap)) - 1;
@@ -376,7 +379,7 @@ bucket_t *allocateBuckets(mask_t newCapacity)
 #else
 #   error unknown architecture
 #endif
-    
+
     return newBuckets;
 }
 
@@ -404,7 +407,7 @@ void cache_t::reallocate(mask_t oldCapacity, mask_t newCapacity)
             cache_counts[bucket]++;
         }
         cache_allocations++;
-        
+
         if (oldCapacity) {
             bucket = log2u(oldCapacity);
             if (bucket < sizeof(cache_counts) / sizeof(cache_counts[0])) {
@@ -418,7 +421,7 @@ void cache_t::reallocate(mask_t oldCapacity, mask_t newCapacity)
     bucket_t *oldBuckets = buckets();
     bucket_t *newBuckets = allocateBuckets(newCapacity);
 
-    // Cache's old contents are not propagated. 
+    // Cache's old contents are not propagated.
     // This is thought to save cache memory at the cost of extra cache fills.
     // fixme re-measure this
 
@@ -426,7 +429,7 @@ void cache_t::reallocate(mask_t oldCapacity, mask_t newCapacity)
     assert((uintptr_t)(mask_t)(newCapacity-1) == newCapacity-1);
 
     setBucketsAndMask(newBuckets, newCapacity - 1);
-    
+
     if (freeOld) {
         cache_collect_free(oldBuckets, oldCapacity * sizeof(bucket_t));
         cache_collect(false);
@@ -435,13 +438,13 @@ void cache_t::reallocate(mask_t oldCapacity, mask_t newCapacity)
 
 
 // called by objc_msgSend
-extern "C" 
+extern "C"
 void objc_msgSend_corrupt_cache_error(id receiver, SEL sel, Class isa)
 {
     cache_t::bad_cache(receiver, sel, isa);
 }
 
-extern "C" 
+extern "C"
 void cache_getImp_corrupt_cache_error(id receiver, SEL sel, Class isa)
 {
     cache_t::bad_cache(receiver, sel, isa);
@@ -456,13 +459,13 @@ void cache_t::bad_cache(id receiver, SEL sel, Class isa)
     cache_t *cache = &isa->cache;
     _objc_inform_now_and_on_crash
         ("%s %p, SEL %p, isa %p, cache %p, buckets %p, "
-         "mask 0x%x, occupied 0x%x", 
-         receiver ? "receiver" : "unused", receiver, 
-         sel, isa, cache, cache->_buckets, 
+         "mask 0x%x, occupied 0x%x",
+         receiver ? "receiver" : "unused", receiver,
+         sel, isa, cache, cache->_buckets,
          cache->_mask, cache->_occupied);
     _objc_inform_now_and_on_crash
-        ("%s %zu bytes, buckets %zu bytes", 
-         receiver ? "receiver" : "unused", malloc_size(receiver), 
+        ("%s %zu bytes, buckets %zu bytes",
+         receiver ? "receiver" : "unused", malloc_size(receiver),
          malloc_size(cache->_buckets));
     _objc_inform_now_and_on_crash
         ("selector '%s'", sel_getName(sel));
@@ -496,7 +499,7 @@ bucket_t * cache_t::find(cache_key_t k)
 void cache_t::expand()
 {
     mutex_assert_locked(&cacheUpdateLock);
-    
+
     uint32_t oldCapacity = capacity();
     uint32_t newCapacity = oldCapacity ? oldCapacity*2 : INIT_CACHE_SIZE;
 
@@ -517,7 +520,7 @@ static void cache_fill_nolock(Class cls, SEL sel, IMP imp)
     // Never cache before +initialize is done
     if (!cls->isInitialized()) return;
 
-    // Make sure the entry wasn't added to the cache by some other thread 
+    // Make sure the entry wasn't added to the cache by some other thread
     // before we grabbed the cacheUpdateLock.
     if (cache_getImp(cls, sel)) return;
 
@@ -534,7 +537,7 @@ static void cache_fill_nolock(Class cls, SEL sel, IMP imp)
     }
 
     // Scan for the first unused slot (or used for this class) and insert there
-    // There is guaranteed to be an empty slot because the 
+    // There is guaranteed to be an empty slot because the
     // minimum size is 4 and we resized at 3/4 full.
     bucket_t *bucket = cache->find(key);
     if (bucket->key() == 0) cache->incrementOccupied();
@@ -603,7 +606,7 @@ void cache_eraseImp_nolock(Class cls, SEL sel, IMP imp)
 }
 
 
-void cache_eraseImp(Class cls, SEL sel, IMP imp) 
+void cache_eraseImp(Class cls, SEL sel, IMP imp)
 {
     mutex_lock(&cacheUpdateLock);
     cache_eraseImp_nolock(cls, sel, imp);
@@ -628,7 +631,7 @@ void cache_erase_nolock(cache_t *cache)
 * cache collection.
 **********************************************************************/
 
-#if !TARGET_OS_WIN32
+#if !TARGET_OS_WIN32 && !TARGET_OS_EMSCRIPTEN
 
 // A sentinel (magic value) to report bad thread_get_state status.
 // Must not be a valid PC.
@@ -636,7 +639,7 @@ void cache_erase_nolock(cache_t *cache)
 #define PC_SENTINEL  1
 
 static uintptr_t _get_pc_for_thread(thread_t thread)
-#if defined(__i386__)
+#if defined(__i386__) || TARGET_OS_EMSCRIPTEN
 {
     i386_thread_state_t state;
     unsigned int count = i386_THREAD_STATE_COUNT;
@@ -674,9 +677,9 @@ static uintptr_t _get_pc_for_thread(thread_t thread)
 
 /***********************************************************************
 * _collecting_in_critical.
-* Returns TRUE if some thread is currently executing a cache-reading 
+* Returns TRUE if some thread is currently executing a cache-reading
 * function. Collection of cache garbage is not allowed when a cache-
-* reading function is in progress because it might still be using 
+* reading function is in progress because it might still be using
 * the garbage memory.
 **********************************************************************/
 OBJC_EXPORT uintptr_t objc_entryPoints[];
@@ -684,8 +687,8 @@ OBJC_EXPORT uintptr_t objc_exitPoints[];
 
 static int _collecting_in_critical(void)
 {
-#if TARGET_OS_WIN32
-    return TRUE;
+#if TARGET_OS_WIN32 || TARGET_OS_EMSCRIPTEN
+    return 1;
 #else
     thread_act_port_array_t threads;
     unsigned number;
@@ -727,12 +730,12 @@ static int _collecting_in_critical(void)
             result = TRUE;
             goto done;
         }
-        
+
         // Check whether it is in the cache lookup code
         for (region = 0; objc_entryPoints[region] != 0; region++)
         {
             if ((pc >= objc_entryPoints[region]) &&
-                (pc <= objc_exitPoints[region])) 
+                (pc <= objc_exitPoints[region]))
             {
                 result = TRUE;
                 goto done;
@@ -806,7 +809,7 @@ static void _garbage_make_room(void)
 /***********************************************************************
 * cache_collect_free.  Add the specified malloc'd memory to the list
 * of them to free at some later point.
-* size is used for the collection threshold. It does not have to be 
+* size is used for the collection threshold. It does not have to be
 * precisely the block's size.
 * Cache locks: cacheUpdateLock must be held by the caller.
 **********************************************************************/
@@ -845,10 +848,10 @@ void cache_collect(bool collectALot)
             }
             return;
         }
-    } 
+    }
     else {
         // No excuses.
-        while (_collecting_in_critical()) 
+        while (_collecting_in_critical())
             ;
     }
 
@@ -859,12 +862,12 @@ void cache_collect(bool collectALot)
         cache_collections++;
         _objc_inform ("CACHES: COLLECTING %zu bytes (%zu allocations, %zu collections)", garbage_byte_size, cache_allocations, cache_collections);
     }
-    
+
     // Dispose all refs now in the garbage
     while (garbage_count--) {
         free(garbage_refs[garbage_count]);
     }
-    
+
     // Clear the garbage count and total size indicator
     garbage_count = 0;
     garbage_byte_size = 0;
@@ -881,14 +884,14 @@ void cache_collect(bool collectALot)
 
             if (!count) continue;
 
-            _objc_inform("CACHES: %4d slots: %4d caches, %6zu bytes", 
+            _objc_inform("CACHES: %4d slots: %4d caches, %6zu bytes",
                          slots, count, size);
 
             total_count += count;
             total_size += size;
         }
 
-        _objc_inform("CACHES:      total: %4zu caches, %6zu bytes", 
+        _objc_inform("CACHES:      total: %4zu caches, %6zu bytes",
                      total_count, total_size);
     }
 }
@@ -896,21 +899,21 @@ void cache_collect(bool collectALot)
 
 /***********************************************************************
 * objc_task_threads
-* Replacement for task_threads(). Define DEBUG_TASK_THREADS to debug 
+* Replacement for task_threads(). Define DEBUG_TASK_THREADS to debug
 * crashes when task_threads() is failing.
 *
-* A failure in task_threads() usually means somebody has botched their 
-* Mach or MIG traffic. For example, somebody's error handling was wrong 
-* and they left a message queued on the MIG reply port for task_threads() 
+* A failure in task_threads() usually means somebody has botched their
+* Mach or MIG traffic. For example, somebody's error handling was wrong
+* and they left a message queued on the MIG reply port for task_threads()
 * to trip over.
 *
-* The code below is a modified version of task_threads(). It logs 
-* the msgh_id of the reply message. The msgh_id can identify the sender 
+* The code below is a modified version of task_threads(). It logs
+* the msgh_id of the reply message. The msgh_id can identify the sender
 * of the message, which can help pinpoint the faulty code.
-* DEBUG_TASK_THREADS also calls collecting_in_critical() during every 
+* DEBUG_TASK_THREADS also calls collecting_in_critical() during every
 * message dispatch, which can increase reproducibility of bugs.
 *
-* This code can be regenerated by running 
+* This code can be regenerated by running
 * `mig /usr/include/mach/task.defs`.
 **********************************************************************/
 #if DEBUG_TASK_THREADS
@@ -1093,7 +1096,7 @@ static kern_return_t objc_task_threads
 	msg_result = mach_msg(&InP->Head, MACH_SEND_MSG|MACH_RCV_MSG|MACH_MSG_OPTION_NONE, (mach_msg_size_t)sizeof(Request), (mach_msg_size_t)sizeof(Reply), InP->Head.msgh_reply_port, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
 	__AfterSendRpc(3402, "task_threads")
 	if (msg_result != MACH_MSG_SUCCESS) {
-		_objc_inform("task_threads received unexpected reply msgh_id 0x%zx", 
+		_objc_inform("task_threads received unexpected reply msgh_id 0x%zx",
                              (size_t)Out0P->Head.msgh_id);
 		__MachMsgErrorWithoutTimeout(msg_result);
 		{ return msg_result; }

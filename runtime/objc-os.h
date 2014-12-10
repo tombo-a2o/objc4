@@ -1176,6 +1176,12 @@ static __inline void tls_set(tls_key_t k, void *value) {
   #warning "tls???"
 }
 
+#   define BREAKPOINT_FUNCTION(prototype)                             \
+OBJC_EXTERN __attribute__((noinline, used, visibility("hidden"))) \
+prototype { asm(""); }
+
+#   define OBJC_RUNTIME_OBJC_EXCEPTION_RETHROW() do {} while(0)
+#   define OBJC_RUNTIME_OBJC_EXCEPTION_THROW(arg0) do {} while(0)
 
 
 #else
