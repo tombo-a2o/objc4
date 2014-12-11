@@ -347,13 +347,7 @@ extern void _objc_fatal(const char *fmt, ...) __attribute__((noreturn, format (p
 #define INIT_ONCE_PTR(var, create, delete)                              \
     do {                                                                \
         if (var) break;                                                 \
-        typeof(var) v = create;                                         \
-        while (!var) {                                                  \
-            if (OSAtomicCompareAndSwapPtrBarrier(0, (void*)v, (void**)&var)){ \
-                goto done;                                              \
-            }                                                           \
-        }                                                               \
-        delete;                                                         \
+        var = create;                                                 \
     done:;                                                              \
     } while (0)
 
@@ -953,6 +947,7 @@ static __inline void *malloc_zone_realloc(malloc_zone_t z, void *p, size_t size)
 static __inline void malloc_zone_free(malloc_zone_t z, void *p) { free(p); }
 static __inline malloc_zone_t malloc_zone_from_ptr(const void *p) { return (malloc_zone_t)-1; }
 static __inline size_t malloc_size(const void *p) { return malloc_usable_size((void*)p); /* fixme invalid pointer check? */ }
+static __inline void *malloc_zone_memalign(malloc_zone_t z, size_t size, size_t count) { return 0; }
 
 // OSAtomic
 
@@ -1157,24 +1152,30 @@ static inline bool _rwlock_try_write_nodebug(rwlock_t *l)
   return (err == 0);
 }
 
-typedef struct {
-  int key;
-  void (*dtor)(void *);
-} tls_key_t;
-static __inline tls_key_t tls_create(void (*dtor)(void*)) {
+typedef pthread_key_t tls_key_t;
+
+static inline tls_key_t tls_create(void (*dtor)(void*)) {
   tls_key_t k;
-#warning "k.key = TlsAlloc();""
-  k.key = 0;
-  k.dtor = dtor;
+  pthread_key_create(&k, dtor);
   return k;
 }
-static __inline void *tls_get(tls_key_t k) {
-  #warning "tls???"
-  return NULL;
+static inline void *tls_get(tls_key_t k) {
+  return pthread_getspecific(k);
 }
-static __inline void tls_set(tls_key_t k, void *value) {
-  #warning "tls???"
+static inline void tls_set(tls_key_t k, void *value) {
+  pthread_setspecific(k, value);
 }
+
+static inline void *tls_get_direct(tls_key_t k)
+{
+  return pthread_getspecific(k);
+}
+static inline void tls_set_direct(tls_key_t k, void *value)
+{
+  pthread_setspecific(k, value);
+}
+
+
 
 #   define BREAKPOINT_FUNCTION(prototype)                             \
 OBJC_EXTERN __attribute__((noinline, used, visibility("hidden"))) \
@@ -1182,6 +1183,23 @@ prototype { asm(""); }
 
 #   define OBJC_RUNTIME_OBJC_EXCEPTION_RETHROW() do {} while(0)
 #   define OBJC_RUNTIME_OBJC_EXCEPTION_THROW(arg0) do {} while(0)
+
+typedef mutex_t spinlock_t;
+#define spinlock_lock(l) mutex_lock(l)
+#define spinlock_unlock(l) mutex_unlock(l)
+#define spinlock_trylock(l) pthread_mutex_trylock(l)
+
+#define SPINLOCK_INITIALIZER MUTEX_INITIALIZER
+#define MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#define require_action_string(cond, dest, act, msg) do { if (!(cond)) { { act; } goto dest; } } while (0)
+#define require_noerr_string(err, dest, msg) do { if (err) goto dest; } while (0)
+#define require_string(cond, dest, msg) do { if (!(cond)) goto dest; } while (0)
+
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+#define AUTORELEASE_POOL_KEY 1
+
+
 
 
 #else

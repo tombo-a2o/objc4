@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -34,12 +34,12 @@
 #include "objc-runtime-old.h"
 #include "objcrt.h"
 
-malloc_zone_t *_objc_internal_zone(void) 
-{ 
-    return NULL; 
+malloc_zone_t *_objc_internal_zone(void)
+{
+    return NULL;
 }
 
-int monitor_init(monitor_t *c) 
+int monitor_init(monitor_t *c)
 {
     // fixme error checking
     HANDLE mutex = CreateMutex(NULL, TRUE, NULL);
@@ -52,7 +52,7 @@ int monitor_init(monitor_t *c)
             InitializeCriticalSection(&c->waitCountLock);
             c->waitCount = 0;
             c->didBroadcast = 0;
-            ReleaseMutex(c->mutex);    
+            ReleaseMutex(c->mutex);
             return 0;
         }
     }
@@ -90,7 +90,7 @@ void recursive_mutex_init(recursive_mutex_t *m)
             return;
         }
     }
-    
+
     // someone else installed their lock first
     CloseHandle(newmutex);
 }
@@ -153,16 +153,16 @@ OBJC_EXPORT void *_objc_init_image(HMODULE image, const objc_sections *sects)
             if (hi->modules[i]) memcpy(&hi->mod_ptr[hi->mod_count++], hi->modules[i], sizeof(struct objc_module));
         }
     }
-    
+
     hi->moduleName = malloc(MAX_PATH * sizeof(TCHAR));
     GetModuleFileName((HMODULE)(hi->mhdr), hi->moduleName, MAX_PATH * sizeof(TCHAR));
 
     appendHeader(hi);
 
     if (PrintImages) {
-        _objc_inform("IMAGES: loading image for %s%s%s\n", 
-            hi->fname, 
-            headerIsBundle(hi) ? " (bundle)" : "", 
+        _objc_inform("IMAGES: loading image for %s%s%s\n",
+            hi->fname,
+            headerIsBundle(hi) ? " (bundle)" : "",
             _objcHeaderIsReplacement(hi) ? " (replacement)":"");
     }
 
@@ -233,7 +233,7 @@ void recursive_mutex_init(recursive_mutex_t *m)
             return;
         }
     }
-    
+
     // someone else installed their mutex first
     pthread_mutex_destroy(newmutex);
 }
@@ -245,7 +245,7 @@ void recursive_mutex_init(recursive_mutex_t *m)
 **********************************************************************/
 BOOL bad_magic(const headerType *mhdr)
 {
-    return (mhdr->magic != MH_MAGIC  &&  mhdr->magic != MH_MAGIC_64  &&  
+    return (mhdr->magic != MH_MAGIC  &&  mhdr->magic != MH_MAGIC_64  &&
             mhdr->magic != MH_CIGAM  &&  mhdr->magic != MH_CIGAM_64);
 }
 
@@ -284,7 +284,7 @@ static header_info * addHeader(const headerType *mhdr)
         assert(image_info == hi->info);
 # endif
     }
-    else 
+    else
 #endif
     {
         // Didn't find an hinfo in the dyld shared cache.
@@ -325,7 +325,7 @@ static header_info * addHeader(const headerType *mhdr)
     }
 
     appendHeader(hi);
-    
+
     return hi;
 }
 
@@ -369,7 +369,7 @@ const char *_gcForHInfo2(const header_info *hinfo)
 
 /***********************************************************************
 * linksToLibrary
-* Returns true if the image links directly to a dylib whose install name 
+* Returns true if the image links directly to a dylib whose install name
 * is exactly the given name.
 **********************************************************************/
 bool
@@ -377,7 +377,7 @@ linksToLibrary(const header_info *hi, const char *name)
 {
     const struct dylib_command *cmd;
     unsigned long i;
-    
+
     cmd = (const struct dylib_command *) (hi->mhdr + 1);
     for (i = 0; i < hi->mhdr->ncmds; i++) {
         if (cmd->cmd == LC_LOAD_DYLIB  ||  cmd->cmd == LC_LOAD_UPWARD_DYLIB  ||
@@ -395,7 +395,7 @@ linksToLibrary(const header_info *hi, const char *name)
 
 /***********************************************************************
 * check_gc
-* Check whether the executable supports or requires GC, and make sure 
+* Check whether the executable supports or requires GC, and make sure
 * all already-loaded libraries support the executable's GC mode.
 * Returns TRUE if the executable wants GC on.
 **********************************************************************/
@@ -409,9 +409,9 @@ static void check_wants_gc(BOOL *appWantsGC)
         *appWantsGC = NO;
     }
     else {
-        // Find the executable and check its GC bits. 
+        // Find the executable and check its GC bits.
         // If the executable cannot be found, default to NO.
-        // (The executable will not be found if the executable contains 
+        // (The executable will not be found if the executable contains
         // no Objective-C code.)
         *appWantsGC = NO;
         for (hi = FirstHeader; hi != NULL; hi = hi->next) {
@@ -438,7 +438,7 @@ static void check_wants_gc(BOOL *appWantsGC)
                     else classcount = 1;
                     _getObjcClassRefs(hi, &refcount);
 #endif
-                    if (classcount == 0  &&  refcount == 1  &&  
+                    if (classcount == 0  &&  refcount == 1  &&
                         linksToLibrary(hi, "/System/Library/Frameworks"
                                        "/AppleScriptObjC.framework/Versions/A"
                                        "/AppleScriptObjC"))
@@ -474,9 +474,9 @@ static void verify_gc_readiness(BOOL wantsGC,
             continue;
         }
         else if (hi->mhdr == &_mh_dylib_header) {
-            // libobjc itself works with anything even though it is not 
+            // libobjc itself works with anything even though it is not
             // compiled with -fobjc-gc (fixme should it be?)
-        } 
+        }
         else if (wantsGC  &&  ! _objcHeaderSupportsGC(hi)) {
             // App wants GC but library does not support it - bad
             _objc_inform_now_and_on_crash
@@ -484,24 +484,24 @@ static void verify_gc_readiness(BOOL wantsGC,
                  "but the application requires GC",
                  hi->fname);
             busted = YES;
-        } 
+        }
         else if (!wantsGC  &&  _objcHeaderRequiresGC(hi)) {
             // App doesn't want GC but library requires it - bad
             _objc_inform_now_and_on_crash
                 ("'%s' was compiled with -fobjc-gc-only, "
                  "but the application does not support GC",
                  hi->fname);
-            busted = YES;            
+            busted = YES;
         }
-        
+
         if (PrintGC) {
-            _objc_inform("GC: library '%s' %s", 
+            _objc_inform("GC: library '%s' %s",
                          hi->fname, _gcForHInfo(hi));
         }
     }
-    
+
     if (busted) {
-        // GC state is not consistent. 
+        // GC state is not consistent.
         // Kill the process unless one of the forcing flags is set.
         if (!DisableGC) {
             _objc_fatal("*** GC capability of application and some libraries did not match");
@@ -513,12 +513,12 @@ static void verify_gc_readiness(BOOL wantsGC,
 /***********************************************************************
 * gc_enforcer
 * Make sure that images about to be loaded by dyld are GC-acceptable.
-* Images linked to the executable are always permitted; they are 
+* Images linked to the executable are always permitted; they are
 * enforced inside map_images() itself.
 **********************************************************************/
 static BOOL InitialDyldRegistration = NO;
-static const char *gc_enforcer(enum dyld_image_states state, 
-                               uint32_t infoCount, 
+static const char *gc_enforcer(enum dyld_image_states state,
+                               uint32_t infoCount,
                                const struct dyld_image_info info[])
 {
     uint32_t i;
@@ -527,7 +527,7 @@ static const char *gc_enforcer(enum dyld_image_states state,
     if (InitialDyldRegistration) return NULL;
 
     if (PrintImages) {
-        _objc_inform("IMAGES: checking %d images for compatibility...", 
+        _objc_inform("IMAGES: checking %d images for compatibility...",
                      infoCount);
     }
 
@@ -619,12 +619,12 @@ static const char *gc_enforcer(enum dyld_image_states state,
 #   error unknown OS
 #endif
 
-static uint32_t 
+static uint32_t
 getSDKVersion(const header_info *hi)
 {
     const struct version_min_command *cmd;
     unsigned long i;
-    
+
     cmd = (const struct version_min_command *) (hi->mhdr + 1);
     for (i = 0; i < hi->mhdr->ncmds; i++){
         if (cmd->cmd == LC_VERSION_MIN  &&  cmd->cmdsize >= 16) {
@@ -644,7 +644,7 @@ getSDKVersion(const header_info *hi)
 * All class registration and fixups are performed (or deferred pending
 * discovery of missing superclasses etc), and +load methods are called.
 *
-* info[] is in bottom-up order i.e. libobjc will be earlier in the 
+* info[] is in bottom-up order i.e. libobjc will be earlier in the
 * array than any library that links to libobjc.
 *
 * Locking: loadMethodLock(old) or runtimeLock(new) acquired by map_images.
@@ -668,7 +668,7 @@ map_images_nolock(enum dyld_image_states state, uint32_t infoCount,
     size_t selrefCount = 0;
 
     // Perform first-time initialization if necessary.
-    // This function is called before ordinary library initializers. 
+    // This function is called before ordinary library initializers.
     // fixme defer initialization until an objc-using image is found?
     if (firstTime) {
         preopt_init();
@@ -712,31 +712,31 @@ map_images_nolock(enum dyld_image_states state, uint32_t infoCount,
         }
 
         hList[hCount++] = hi;
-        
+
 
         if (PrintImages) {
-            _objc_inform("IMAGES: loading image for %s%s%s%s%s\n", 
-                         hi->fname, 
-                         mhdr->filetype == MH_BUNDLE ? " (bundle)" : "", 
+            _objc_inform("IMAGES: loading image for %s%s%s%s%s\n",
+                         hi->fname,
+                         mhdr->filetype == MH_BUNDLE ? " (bundle)" : "",
                          _objcHeaderIsReplacement(hi) ? " (replacement)" : "",
                          _objcHeaderOptimizedByDyld(hi)?" (preoptimized)" : "",
                          _gcForHInfo2(hi));
         }
     }
 
-    // Perform one-time runtime initialization that must be deferred until 
-    // the executable itself is found. This needs to be done before 
+    // Perform one-time runtime initialization that must be deferred until
+    // the executable itself is found. This needs to be done before
     // further initialization.
-    // (The executable may not be present in this infoList if the 
-    // executable does not contain Objective-C code but Objective-C 
-    // is dynamically loaded later. In that case, check_wants_gc() 
+    // (The executable may not be present in this infoList if the
+    // executable does not contain Objective-C code but Objective-C
+    // is dynamically loaded later. In that case, check_wants_gc()
     // will do the right thing.)
 #if SUPPORT_GC
     if (firstTime) {
         check_wants_gc(&wantsGC);
 
         verify_gc_readiness(wantsGC, hList, hCount);
-        
+
         gc_init(wantsGC);  // needs executable for GC decision
     } else {
         verify_gc_readiness(wantsGC, hList, hCount);
@@ -754,7 +754,7 @@ map_images_nolock(enum dyld_image_states state, uint32_t infoCount,
 
             seg = getsegmentdata(hi->mhdr, "__OBJC", &seg_size);
             if (seg) gc_register_datasegment((uintptr_t)seg, seg_size);
-            // __OBJC contains no GC data, but pointers to it are 
+            // __OBJC contains no GC data, but pointers to it are
             // used as associated reference values (rdar://6953570)
         }
     }
@@ -780,7 +780,7 @@ map_images_nolock(enum dyld_image_states state, uint32_t infoCount,
 *
 * Locking: loadMethodLock(both) and runtimeLock(new) acquired by load_images
 **********************************************************************/
-BOOL 
+BOOL
 load_images_nolock(enum dyld_image_states state,uint32_t infoCount,
                    const struct dyld_image_info infoList[])
 {
@@ -806,12 +806,12 @@ load_images_nolock(enum dyld_image_states state,uint32_t infoCount,
 /***********************************************************************
 * unmap_image_nolock
 * Process the given image which is about to be unmapped by dyld.
-* mh is mach_header instead of headerType because that's what 
+* mh is mach_header instead of headerType because that's what
 *   dyld_priv.h says even for 64-bit.
-* 
+*
 * Locking: loadMethodLock(both) and runtimeLock(new) acquired by unmap_image.
 **********************************************************************/
-void 
+void
 unmap_image_nolock(const struct mach_header *mh)
 {
     if (PrintImages) {
@@ -819,7 +819,7 @@ unmap_image_nolock(const struct mach_header *mh)
     }
 
     header_info *hi;
-    
+
     // Find the runtime's header_info struct for the image
     for (hi = FirstHeader; hi != NULL; hi = hi->next) {
         if (hi->mhdr == (const headerType *)mh) {
@@ -829,11 +829,11 @@ unmap_image_nolock(const struct mach_header *mh)
 
     if (!hi) return;
 
-    if (PrintImages) { 
-        _objc_inform("IMAGES: unloading image for %s%s%s%s\n", 
-                     hi->fname, 
-                     hi->mhdr->filetype == MH_BUNDLE ? " (bundle)" : "", 
-                     _objcHeaderIsReplacement(hi) ? " (replacement)" : "", 
+    if (PrintImages) {
+        _objc_inform("IMAGES: unloading image for %s%s%s%s\n",
+                     hi->fname,
+                     hi->mhdr->filetype == MH_BUNDLE ? " (bundle)" : "",
+                     _objcHeaderIsReplacement(hi) ? " (replacement)" : "",
                      _gcForHInfo2(hi));
     }
 
@@ -872,13 +872,13 @@ void _objc_init(void)
     static bool initialized = false;
     if (initialized) return;
     initialized = true;
-    
+
     // fixme defer initialization until an objc-using image is found?
     environ_init();
     tls_init();
     lock_init();
     exception_init();
-        
+
     // Register for unmap first, in case some +load unmaps something
     _dyld_register_func_for_remove_image(&unmap_image);
     dyld_register_image_state_change_handler(dyld_image_state_bound,
@@ -934,7 +934,7 @@ const header_info *_headerForClass(Class cls)
 * secure_open
 * Securely open a file from a world-writable directory (like /tmp)
 * If the file does not exist, it will be atomically created with mode 0600
-* If the file exists, it must be, and remain after opening: 
+* If the file exists, it must be, and remain after opening:
 *   1. a regular file (in particular, not a symlink)
 *   2. owned by euid
 *   3. permissions 0600
@@ -987,7 +987,7 @@ int secure_open(const char *filename, int flags, uid_t euid)
             fd = open(filename, flags, 0000);
             if (fd >= 0) {
                 // File is open - double-check attributes
-                if (0 == fstat(fd, &fs)  &&  
+                if (0 == fstat(fd, &fs)  &&
                     fs.st_nlink == ls.st_nlink  &&  // link count == 1?
                     fs.st_uid == ls.st_uid  &&      // owned by euid?
                     fs.st_mode == ls.st_mode  &&    // regular file, 0600?
@@ -1017,7 +1017,7 @@ int secure_open(const char *filename, int flags, uid_t euid)
 /***********************************************************************
 * _objc_internal_zone.
 * Malloc zone for internal runtime data.
-* By default this is the default malloc zone, but a dedicated zone is 
+* By default this is the default malloc zone, but a dedicated zone is
 * used if environment variable OBJC_USE_INTERNAL_ZONE is set.
 **********************************************************************/
 malloc_zone_t *_objc_internal_zone(void)
@@ -1070,6 +1070,9 @@ const char *CRSetCrashLogMessage2(const char *msg)
 #endif
 
 // TARGET_OS_MAC
+#elif TARGET_OS_EMSCRIPTEN
+#warning "not implemented"
+
 #else
 
 

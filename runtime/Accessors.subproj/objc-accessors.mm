@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2006-2008 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,14 +17,14 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
 #include <string.h>
 #include <stddef.h>
 
-#include <libkern/OSAtomic.h>
+//#include <libkern/OSAtomic.h>
 
 #include "objc-private.h"
 #include "objc-auto.h"
@@ -64,13 +64,13 @@ id objc_getProperty_non_gc(id self, SEL _cmd, ptrdiff_t offset, BOOL atomic) {
     // Retain release world
     id *slot = (id*) ((char*)self + offset);
     if (!atomic) return *slot;
-        
+
     // Atomic retain release world
     spin_lock_t *slotlock = &PropertyLocks[GOODHASH(slot)];
     _spin_lock(slotlock);
     id value = objc_retain(*slot);
     _spin_unlock(slotlock);
-    
+
     // for performance, we (safely) issue the autorelease OUTSIDE of the spinlock.
     return objc_autoreleaseReturnValue(value);
 }
@@ -104,14 +104,14 @@ static inline void reallySetProperty(id self, SEL _cmd, id newValue, ptrdiff_t o
         spin_lock_t *slotlock = &PropertyLocks[GOODHASH(slot)];
         _spin_lock(slotlock);
         oldValue = *slot;
-        *slot = newValue;        
+        *slot = newValue;
         _spin_unlock(slotlock);
     }
 
     objc_release(oldValue);
 }
 
-void objc_setProperty_non_gc(id self, SEL _cmd, ptrdiff_t offset, id newValue, BOOL atomic, signed char shouldCopy) 
+void objc_setProperty_non_gc(id self, SEL _cmd, ptrdiff_t offset, id newValue, BOOL atomic, signed char shouldCopy)
 {
     bool copy = (shouldCopy && shouldCopy != MUTABLE_COPY);
     bool mutableCopy = (shouldCopy == MUTABLE_COPY);
@@ -157,15 +157,15 @@ void objc_setProperty_gc(id self, SEL _cmd, ptrdiff_t offset, id newValue, BOOL 
 
 #else
 
-id 
-objc_getProperty(id self, SEL _cmd, ptrdiff_t offset, BOOL atomic) 
+id
+objc_getProperty(id self, SEL _cmd, ptrdiff_t offset, BOOL atomic)
 {
     return objc_getProperty_non_gc(self, _cmd, offset, atomic);
 }
 
-void 
-objc_setProperty(id self, SEL _cmd, ptrdiff_t offset, id newValue, 
-                 BOOL atomic, signed char shouldCopy) 
+void
+objc_setProperty(id self, SEL _cmd, ptrdiff_t offset, id newValue,
+                 BOOL atomic, signed char shouldCopy)
 {
     objc_setProperty_non_gc(self, _cmd, offset, newValue, atomic, shouldCopy);
 }
@@ -198,7 +198,7 @@ void objc_copyStruct(void *dest, const void *src, ptrdiff_t size, BOOL atomic, B
 #if SUPPORT_GC
     if (UseGC && hasStrong) {
         auto_zone_write_barrier_memmove(gc_zone, dest, src, size);
-    } else 
+    } else
 #endif
     {
         memmove(dest, src, size);
@@ -226,7 +226,7 @@ void objc_copyCppObjectAtomic(void *dest, const void *src, void (*copyHelper) (v
 
         // let C++ code perform the actual copy.
         copyHelper(dest, src);
-    
+
     _spin_unlock(lockfirst);
     if (locksecond) _spin_unlock(locksecond);
 }

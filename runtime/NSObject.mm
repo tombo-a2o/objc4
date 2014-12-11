@@ -31,15 +31,15 @@
 #include <malloc.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <mach/mach.h>
-#include <mach-o/dyld.h>
-#include <mach-o/nlist.h>
+//#include <mach/mach.h>
+//#include <mach-o/dyld.h>
+//#include <mach-o/nlist.h>
 #include <sys/types.h>
 #include <sys/mman.h>
-#include <libkern/OSAtomic.h>
+//#include <libkern/OSAtomic.h>
 #include <Block.h>
 #include <map>
-#include <execinfo.h>
+//#include <execinfo.h>
 
 @interface NSInvocation
 - (SEL)selector;
@@ -152,7 +152,7 @@ public:
     RefcountMap refcnts;
     weak_table_t weak_table;
 
-    SideTable() : slock(SPINLOCK_INITIALIZER)
+    SideTable() //: slock(SPINLOCK_INITIALIZER)
     {
         memset(&weak_table, 0, sizeof(weak_table));
     }
@@ -493,8 +493,10 @@ struct magic_t {
 class AutoreleasePoolPage
 {
 
-#define POOL_SENTINEL nil
+#define PAGE_MAX_SIZE  4096
+  #define POOL_SENTINEL nil
     static pthread_key_t const key = AUTORELEASE_POOL_KEY;
+#warning "autorelease_pool_key"
     static uint8_t const SCRIBBLE = 0xA3;  // 0xA3A3A3A3 after releasing
     static size_t const SIZE =
 #if PROTECT_AUTORELEASEPOOL
@@ -857,9 +859,9 @@ public:
 
     static void init()
     {
-        int r __unused = pthread_key_init_np(AutoreleasePoolPage::key,
-                                             AutoreleasePoolPage::tls_dealloc);
-        assert(r == 0);
+//        int r __unused = pthread_key_init_np(AutoreleasePoolPage::key,
+//                                             AutoreleasePoolPage::tls_dealloc);
+//        assert(r == 0);
     }
 
     void print()
@@ -916,12 +918,12 @@ public:
                          mark, pthread_self());
 
             void *stack[128];
-            int count = backtrace(stack, sizeof(stack)/sizeof(stack[0]));
-            char **sym = backtrace_symbols(stack, count);
-            for (int i = 0; i < count; i++) {
-                _objc_inform("POOL HIGHWATER:     %s", sym[i]);
-            }
-            free(sym);
+            //int count = backtrace(stack, sizeof(stack)/sizeof(stack[0]));
+            //char **sym = backtrace_symbols(stack, count);
+            //for (int i = 0; i < count; i++) {
+            //    _objc_inform("POOL HIGHWATER:     %s", sym[i]);
+            //}
+            //free(sym);
         }
     }
 
@@ -1608,7 +1610,7 @@ _objc_rootZone(id obj)
     }
 #if __OBJC2__
     // allocWithZone under __OBJC2__ ignores the zone parameter
-    return malloc_default_zone();
+    return NULL; //malloc_default_zone();
 #else
     malloc_zone_t *rval = malloc_zone_from_ptr(obj);
     return rval ? rval : malloc_default_zone();

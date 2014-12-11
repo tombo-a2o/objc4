@@ -26,6 +26,8 @@
 #include "objc-private.h"
 #include "objc-file.h"
 
+#if !TARGET_OS_EMSCRIPTEN
+
 extern uint8_t * getsectiondata(const struct mach_header *mhp, const char *segname, const char *sectname, unsigned long *size){ return 0; }
 
 #define SEG_DATA "__DATA"
@@ -102,5 +104,10 @@ _hasObjcContents(const header_info *hi)
 
     return NO;
 }
+
+#else
+
+#warning "not implemented"
+#endif
 
 #endif

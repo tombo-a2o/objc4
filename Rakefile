@@ -23,7 +23,7 @@ target.build_phases.each{ |phase|
 		files.each{ |file|
 #			p file
 		}
-		task "obj" => files.map{|f| f.path.gsub(/\.m+$/, ".o")}
+		task "obj" => files.map{|f| f.path.gsub(/\.m+$/, ".o")}.select{|n| !n.match(/trampolines/)}
 	end
 }
 
@@ -44,18 +44,18 @@ end
 
 
 CC = "em++"
-INCLUDE = "-I./include -I./include/objc"
+INCLUDE = "-I./include -I./include/objc -I./runtime"
 COPTS = "-v -fblocks"
 CFLAGS="#{INCLUDE} #{COPTS}"
 
 rule ".o" => ".m" do |t|
-	sh "#{CC} #{CFLAGS} -c #{t.source}"
+	sh "#{CC} #{CFLAGS} -o #{t.name} -c #{t.source}"
 end
 
 rule ".o" => ".mm" do |t|
-	sh "#{CC} #{CFLAGS} -c #{t.source}"
+	sh "#{CC} #{CFLAGS} -o #{t.name} -c #{t.source}"
 end
 
 rule ".o" => ".s" do |t|
-	sh "#{CC} #{CFLAGS} -c #{t.source}"
+	sh "#{CC} #{CFLAGS} -o #{t.name} -c #{t.source}"
 end

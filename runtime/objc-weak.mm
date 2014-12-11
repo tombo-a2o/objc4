@@ -2,14 +2,14 @@
  * Copyright (c) 2010-2011 Apple Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
-#include <libkern/OSAtomic.h>
+//#include <libkern/OSAtomic.h>
 
 #define TABLE_SIZE(entry) (entry->mask ? entry->mask + 1 : 0)
 
@@ -38,36 +38,36 @@ BREAKPOINT_FUNCTION(
     void objc_weak_error(void)
 );
 
-/** 
+/**
  * Unique hash function for object pointers only.
- * 
+ *
  * @param key The object pointer
- * 
+ *
  * @return Size unrestricted hash of pointer.
  */
 static inline uintptr_t hash_pointer(objc_object *key) {
     return ptr_hash((uintptr_t)key);
 }
 
-/** 
+/**
  * Unique hash function for weak object pointers only.
- * 
- * @param key The weak object pointer. 
- * 
+ *
+ * @param key The weak object pointer.
+ *
  * @return Size unrestricted hash of pointer.
  */
 static inline uintptr_t w_hash_pointer(objc_object **key) {
     return ptr_hash((uintptr_t)key);
 }
 
-/** 
+/**
  * Grow the entry's hash table of referrers. Rehashes each
  * of the referrers.
- * 
+ *
  * @param entry Weak pointer hash set for a particular object.
  */
 __attribute__((noinline, used))
-static void grow_refs_and_insert(weak_entry_t *entry, 
+static void grow_refs_and_insert(weak_entry_t *entry,
                                  objc_object **new_referrer)
 {
     assert(entry->out_of_line);
@@ -78,12 +78,12 @@ static void grow_refs_and_insert(weak_entry_t *entry,
     size_t num_refs = entry->num_refs;
     weak_referrer_t *old_refs = entry->referrers;
     entry->mask = new_size - 1;
-    
+
     entry->referrers = (weak_referrer_t *)
         _calloc_internal(TABLE_SIZE(entry), sizeof(weak_referrer_t));
     entry->num_refs = 0;
     entry->max_hash_displacement = 0;
-    
+
     for (size_t i = 0; i < old_size && num_refs > 0; i++) {
         if (old_refs[i] != nil) {
             append_referrer(entry, old_refs[i]);
@@ -95,12 +95,12 @@ static void grow_refs_and_insert(weak_entry_t *entry,
     if (old_refs) _free_internal(old_refs);
 }
 
-/** 
+/**
  * Add the given referrer to set of weak pointers in this entry.
  * Does not perform duplicate checking (b/c weak pointers are never
- * added to a set twice). 
+ * added to a set twice).
  *
- * @param entry The entry holding the set of weak pointers. 
+ * @param entry The entry holding the set of weak pointers.
  * @param new_referrer The new weak pointer to be added.
  */
 static void append_referrer(weak_entry_t *entry, objc_object **new_referrer)
@@ -148,14 +148,14 @@ static void append_referrer(weak_entry_t *entry, objc_object **new_referrer)
     entry->num_refs++;
 }
 
-/** 
+/**
  * Remove old_referrer from set of referrers, if it's present.
- * Does not remove duplicates, because duplicates should not exist. 
- * 
- * @todo this is slow if old_referrer is not present. Is this ever the case? 
+ * Does not remove duplicates, because duplicates should not exist.
+ *
+ * @todo this is slow if old_referrer is not present. Is this ever the case?
  *
  * @param entry The entry holding the referrers.
- * @param old_referrer The referrer to remove. 
+ * @param old_referrer The referrer to remove.
  */
 static void remove_referrer(weak_entry_t *entry, objc_object **old_referrer)
 {
@@ -169,7 +169,7 @@ static void remove_referrer(weak_entry_t *entry, objc_object **old_referrer)
         _objc_inform("Attempted to unregister unknown __weak variable "
                      "at %p. This is probably incorrect use of "
                      "objc_storeWeak() and objc_loadWeak(). "
-                     "Break on objc_weak_error to debug.\n", 
+                     "Break on objc_weak_error to debug.\n",
                      old_referrer);
         objc_weak_error();
         return;
@@ -184,7 +184,7 @@ static void remove_referrer(weak_entry_t *entry, objc_object **old_referrer)
             _objc_inform("Attempted to unregister unknown __weak variable "
                          "at %p. This is probably incorrect use of "
                          "objc_storeWeak() and objc_loadWeak(). "
-                         "Break on objc_weak_error to debug.\n", 
+                         "Break on objc_weak_error to debug.\n",
                          old_referrer);
             objc_weak_error();
             return;
@@ -194,7 +194,7 @@ static void remove_referrer(weak_entry_t *entry, objc_object **old_referrer)
     entry->num_refs--;
 }
 
-/** 
+/**
  * Add new_entry to the object's table of weak references.
  * Does not check whether the referent is already in the table.
  */
@@ -231,7 +231,7 @@ static void weak_resize(weak_table_t *weak_table, size_t new_size)
     weak_table->weak_entries = new_entries;
     weak_table->max_hash_displacement = 0;
     weak_table->num_entries = 0;  // restored by weak_entry_insert below
-    
+
     if (old_entries) {
         weak_entry_t *entry;
         weak_entry_t *end = old_entries + old_size;
@@ -283,15 +283,15 @@ static void weak_entry_remove(weak_table_t *weak_table, weak_entry_t *entry)
 }
 
 
-/** 
- * Return the weak reference table entry for the given referent. 
- * If there is no entry for referent, return NULL. 
+/**
+ * Return the weak reference table entry for the given referent.
+ * If there is no entry for referent, return NULL.
  * Performs a lookup.
  *
- * @param weak_table 
+ * @param weak_table
  * @param referent The object. Must not be nil.
- * 
- * @return The table of weak referrers to this object. 
+ *
+ * @return The table of weak referrers to this object.
  */
 static weak_entry_t *
 weak_entry_for_referent(weak_table_t *weak_table, objc_object *referent)
@@ -311,27 +311,27 @@ weak_entry_for_referent(weak_table_t *weak_table, objc_object *referent)
             return nil;
         }
     }
-    
+
     return &weak_table->weak_entries[index];
 }
 
-/** 
+/**
  * Unregister an already-registered weak reference.
  * This is used when referrer's storage is about to go away, but referent
  * isn't dead yet. (Otherwise, zeroing referrer later would be a
  * bad memory access.)
  * Does nothing if referent/referrer is not a currently active weak reference.
  * Does not zero referrer.
- * 
+ *
  * FIXME currently requires old referent value to be passed in (lame)
  * FIXME unregistration should be automatic if referrer is collected
- * 
+ *
  * @param weak_table The global weak table.
  * @param referent The object.
  * @param referrer The weak reference.
  */
 void
-weak_unregister_no_lock(weak_table_t *weak_table, id referent_id, 
+weak_unregister_no_lock(weak_table_t *weak_table, id referent_id,
                         id *referrer_id)
 {
     objc_object *referent = (objc_object *)referent_id;
@@ -350,7 +350,7 @@ weak_unregister_no_lock(weak_table_t *weak_table, id referent_id,
         else {
             for (size_t i = 0; i < WEAK_INLINE_COUNT; i++) {
                 if (entry->inline_referrers[i]) {
-                    empty = false; 
+                    empty = false;
                     break;
                 }
             }
@@ -361,19 +361,19 @@ weak_unregister_no_lock(weak_table_t *weak_table, id referent_id,
         }
     }
 
-    // Do not set *referrer = nil. objc_storeWeak() requires that the 
+    // Do not set *referrer = nil. objc_storeWeak() requires that the
     // value not change.
 }
 
-/** 
+/**
  * Registers a new (object, weak pointer) pair. Creates a new weak
  * object entry if it does not exist.
- * 
+ *
  * @param weak_table The global weak table.
  * @param referent The object pointed to by the weak reference.
  * @param referrer The weak pointer address.
  */
-id 
+id
 weak_register_no_lock(weak_table_t *weak_table, id referent_id, id *referrer_id)
 {
     objc_object *referent = (objc_object *)referent_id;
@@ -387,9 +387,9 @@ weak_register_no_lock(weak_table_t *weak_table, id referent_id, id *referrer_id)
         deallocating = referent->rootIsDeallocating();
     }
     else {
-        BOOL (*allowsWeakReference)(objc_object *, SEL) = 
+        BOOL (*allowsWeakReference)(objc_object *, SEL) =
             (BOOL(*)(objc_object *, SEL))
-            object_getMethodImplementation((id)referent, 
+            object_getMethodImplementation((id)referent,
                                            SEL_allowsWeakReference);
         if ((IMP)allowsWeakReference == _objc_msgForward) {
             return nil;
@@ -409,7 +409,7 @@ weak_register_no_lock(weak_table_t *weak_table, id referent_id, id *referrer_id)
     weak_entry_t *entry;
     if ((entry = weak_entry_for_referent(weak_table, referent))) {
         append_referrer(entry, referrer);
-    } 
+    }
     else {
         weak_entry_t new_entry;
         new_entry.referent = referent;
@@ -418,12 +418,12 @@ weak_register_no_lock(weak_table_t *weak_table, id referent_id, id *referrer_id)
         for (size_t i = 1; i < WEAK_INLINE_COUNT; i++) {
             new_entry.inline_referrers[i] = nil;
         }
-        
+
         weak_grow_maybe(weak_table);
         weak_entry_insert(weak_table, &new_entry);
     }
 
-    // Do not set *referrer. objc_storeWeak() requires that the 
+    // Do not set *referrer. objc_storeWeak() requires that the
     // value not change.
 
     return referent_id;
@@ -432,22 +432,22 @@ weak_register_no_lock(weak_table_t *weak_table, id referent_id, id *referrer_id)
 
 #if !NDEBUG
 bool
-weak_is_registered_no_lock(weak_table_t *weak_table, id referent_id) 
+weak_is_registered_no_lock(weak_table_t *weak_table, id referent_id)
 {
     return weak_entry_for_referent(weak_table, (objc_object *)referent_id);
 }
 #endif
 
 
-/** 
- * Called by dealloc; nils out all weak pointers that point to the 
+/**
+ * Called by dealloc; nils out all weak pointers that point to the
  * provided object so that they can no longer be used.
- * 
- * @param weak_table 
- * @param referent The object being deallocated. 
+ *
+ * @param weak_table
+ * @param referent The object being deallocated.
  */
-void 
-weak_clear_no_lock(weak_table_t *weak_table, id referent_id) 
+void
+weak_clear_no_lock(weak_table_t *weak_table, id referent_id)
 {
     objc_object *referent = (objc_object *)referent_id;
 
@@ -461,16 +461,16 @@ weak_clear_no_lock(weak_table_t *weak_table, id referent_id)
     // zero out references
     weak_referrer_t *referrers;
     size_t count;
-    
+
     if (entry->out_of_line) {
         referrers = entry->referrers;
         count = TABLE_SIZE(entry);
-    } 
+    }
     else {
         referrers = entry->inline_referrers;
         count = WEAK_INLINE_COUNT;
     }
-    
+
     for (size_t i = 0; i < count; ++i) {
         objc_object **referrer = referrers[i];
         if (referrer) {
@@ -481,47 +481,47 @@ weak_clear_no_lock(weak_table_t *weak_table, id referent_id)
                 _objc_inform("__weak variable at %p holds %p instead of %p. "
                              "This is probably incorrect use of "
                              "objc_storeWeak() and objc_loadWeak(). "
-                             "Break on objc_weak_error to debug.\n", 
+                             "Break on objc_weak_error to debug.\n",
                              referrer, (void*)*referrer, (void*)referent);
                 objc_weak_error();
             }
         }
     }
-    
+
     weak_entry_remove(weak_table, entry);
 }
 
 
-/** 
- * This function gets called when the value of a weak pointer is being 
+/**
+ * This function gets called when the value of a weak pointer is being
  * used in an expression. Called by objc_loadWeakRetained() which is
  * ultimately called by objc_loadWeak(). The objective is to assert that
  * there is in fact a weak pointer(s) entry for this particular object being
  * stored in the weak-table, and to retain that object so it is not deallocated
  * during the weak pointer's usage.
- * 
- * @param weak_table 
- * @param referrer The weak pointer address. 
+ *
+ * @param weak_table
+ * @param referrer The weak pointer address.
  */
 /*
-  Once upon a time we eagerly cleared *referrer if we saw the referent 
-  was deallocating. This confuses code like NSPointerFunctions which 
-  tries to pre-flight the raw storage and assumes if the storage is 
-  zero then the weak system is done interfering. That is false: the 
-  weak system is still going to check and clear the storage later. 
+  Once upon a time we eagerly cleared *referrer if we saw the referent
+  was deallocating. This confuses code like NSPointerFunctions which
+  tries to pre-flight the raw storage and assumes if the storage is
+  zero then the weak system is done interfering. That is false: the
+  weak system is still going to check and clear the storage later.
   This can cause objc_weak_error complaints and crashes.
   So we now don't touch the storage until deallocation completes.
 */
-id 
-weak_read_no_lock(weak_table_t *weak_table, id *referrer_id) 
+id
+weak_read_no_lock(weak_table_t *weak_table, id *referrer_id)
 {
     objc_object **referrer = (objc_object **)referrer_id;
     objc_object *referent = *referrer;
     if (referent->isTaggedPointer()) return (id)referent;
 
     weak_entry_t *entry;
-    if (referent == nil  ||  
-        !(entry = weak_entry_for_referent(weak_table, referent))) 
+    if (referent == nil  ||
+        !(entry = weak_entry_for_referent(weak_table, referent)))
     {
         return nil;
     }
@@ -533,7 +533,7 @@ weak_read_no_lock(weak_table_t *weak_table, id *referrer_id)
     }
     else {
         BOOL (*tryRetain)(objc_object *, SEL) = (BOOL(*)(objc_object *, SEL))
-            object_getMethodImplementation((id)referent, 
+            object_getMethodImplementation((id)referent,
                                            SEL_retainWeakReference);
         if ((IMP)tryRetain == _objc_msgForward) {
             return nil;
@@ -545,4 +545,3 @@ weak_read_no_lock(weak_table_t *weak_table, id *referrer_id)
 
     return (id)referent;
 }
-

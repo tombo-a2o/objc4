@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2010 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,13 +17,13 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
 #include "objc-private.h"
 
-#include <malloc/malloc.h>
+#include <malloc.h>
 #include <assert.h>
 #include "runtime.h"
 #include "objc-os.h"
@@ -35,7 +35,7 @@
 enum {
     // external references to data segment objects all use this type
     OBJC_XREF_TYPE_STATIC = 3,
-    
+
     OBJC_XREF_TYPE_MASK = 3
 };
 
@@ -73,7 +73,7 @@ static void _initialize_gc() {
         external_ref_list *_strong_list = &_xref_lists[_index_for_type(OBJC_XREF_STRONG)];
         _strong_list->_type = OBJC_XREF_STRONG;
         _strong_list->_synchronizer = dispatch_queue_create("OBJC_XREF_STRONG synchronizer", DISPATCH_QUEUE_CONCURRENT);
-        
+
         external_ref_list *_weak_list = &_xref_lists[_index_for_type(OBJC_XREF_WEAK)];
         _weak_list->_type = OBJC_XREF_WEAK;
         _weak_list->_synchronizer = dispatch_queue_create("OBJC_XREF_WEAK synchronizer", DISPATCH_QUEUE_CONCURRENT);
@@ -89,7 +89,7 @@ static bool _grow_list(external_ref_list *list) {
     // auto_realloc() has been enhanced to handle strong and weak memory.
     void **new_list = (void **)(list->_buffer ? malloc_zone_realloc(gc_zone, list->_buffer, new_size * sizeof(void *)) : auto_zone_allocate_object(gc_zone, new_size * sizeof(void *), memory_type, false, false));
     if (!new_list) _objc_fatal("unable to allocate, size = %ld\n", new_size);
-    
+
     list->_search = list->_size;
     // Fill the newly allocated space with empty slot tokens.
     for (size_t index = list->_size; index < new_size; ++index)
@@ -127,10 +127,10 @@ objc_xref_t _object_addExternalReference_gc(id obj, objc_xref_type_t ref_type) {
     _initialize_gc();
     __block size_t index;
     objc_xref_t xref;
-    
+
     if (auto_zone_is_valid_pointer(gc_zone, obj)) {
         external_ref_list *list = _list_for_type(ref_type);
-        
+
         // writer lock
         dispatch_barrier_sync(list->_synchronizer, (dispatch_block_t)^{
             index = _find_unused_index(list);
@@ -157,7 +157,7 @@ id _object_readExternalReference_gc(objc_xref_t ref) {
     if (ref_type != OBJC_XREF_TYPE_STATIC) {
         size_t index = decode_index(ref);
         external_ref_list *list = _list_for_type(ref_type);
-        
+
         dispatch_sync(list->_synchronizer, ^{
             if (index >= list->_size) {
                 _objc_fatal("attempted to resolve invalid external reference\n");
@@ -183,7 +183,7 @@ void _object_removeExternalReference_gc(objc_xref_t ref) {
     if (ref_type != OBJC_XREF_TYPE_STATIC) {
         size_t index = decode_index(ref);
         external_ref_list *list = _list_for_type(ref_type);
-        
+
         dispatch_barrier_sync(list->_synchronizer, ^{
             if (index >= list->_size) {
                 _objc_fatal("attempted to destroy invalid external reference\n");
@@ -260,22 +260,22 @@ uintptr_t _object_getExternalHash(id object) {
 
 #else
 
-objc_xref_t 
-_object_addExternalReference(id obj, objc_xref_t type) 
+objc_xref_t
+_object_addExternalReference(id obj, objc_xref_t type)
 {
     return _object_addExternalReference_non_gc(obj, type);
 }
 
 
-id 
-_object_readExternalReference(objc_xref_t ref) 
+id
+_object_readExternalReference(objc_xref_t ref)
 {
     return _object_readExternalReference_non_gc(ref);
 }
 
 
-void 
-_object_removeExternalReference(objc_xref_t ref) 
+void
+_object_removeExternalReference(objc_xref_t ref)
 {
     _object_removeExternalReference_non_gc(ref);
 }

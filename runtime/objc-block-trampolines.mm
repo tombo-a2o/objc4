@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2010 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 /***********************************************************************
@@ -34,8 +34,9 @@
 
 #include <Block.h>
 #include <Block_private.h>
-#include <mach/mach.h>
+//#include <mach/mach.h>
 
+#define PAGE_MAX_SIZE PAGE_SIZE
 // symbols defined in assembly files
 // Don't use the symbols directly; they're thumb-biased on some ARM archs.
 #define TRAMP(tramp)                                \
@@ -61,53 +62,53 @@ typedef enum {
 #if SUPPORT_STRET
     ReturnValueOnStackArgumentMode,
 #endif
-    
+
     ArgumentModeCount
 } ArgumentMode;
 
 
-// We must take care with our data layout on architectures that support 
+// We must take care with our data layout on architectures that support
 // multiple page sizes.
-// 
+//
 // The trampoline template in __TEXT is sized and aligned with PAGE_MAX_SIZE.
 // On some platforms this requires additional linker flags.
-// 
-// When we allocate a page pair, we use PAGE_MAX_SIZE size. 
+//
+// When we allocate a page pair, we use PAGE_MAX_SIZE size.
 // This allows trampoline code to find its data by subtracting PAGE_MAX_SIZE.
-// 
-// When we allocate a page pair, we use the process's page alignment. 
-// This simplifies allocation because we don't need to force greater than 
-// default alignment when running with small pages, but it also means 
+//
+// When we allocate a page pair, we use the process's page alignment.
+// This simplifies allocation because we don't need to force greater than
+// default alignment when running with small pages, but it also means
 // the trampoline code MUST NOT look for its data by masking with PAGE_MAX_MASK.
 
-struct TrampolineBlockPagePair 
+struct TrampolineBlockPagePair
 {
     TrampolineBlockPagePair *nextPagePair; // linked list of all pages
     TrampolineBlockPagePair *nextAvailablePage; // linked list of pages with available slots
-    
+
     uintptr_t nextAvailable; // index of next available slot, endIndex() if no more available
-    
+
     // Payload data: block pointers and free list.
     // Bytes parallel with trampoline header code are the fields above or unused
-    // uint8_t blocks[ PAGE_MAX_SIZE - sizeof(TrampolineBlockPagePair) ] 
-    
+    // uint8_t blocks[ PAGE_MAX_SIZE - sizeof(TrampolineBlockPagePair) ]
+
     // Code: trampoline header followed by trampolines.
     // uint8_t trampolines[PAGE_MAX_SIZE];
-    
+
     // Per-trampoline block data format:
-    // initial value is 0 while page data is filled sequentially 
+    // initial value is 0 while page data is filled sequentially
     // when filled, value is reference to Block_copy()d block
     // when empty, value is index of next available slot OR 0 if never used yet
-    
+
     union Payload {
         id block;
         uintptr_t nextAvailable;  // free list
     };
-    
+
     static uintptr_t headerSize() {
         return (uintptr_t) (a1a2_firsttramp() - a1a2_tramphead());
     }
-    
+
     static uintptr_t slotSize() {
         return 8;
     }
@@ -154,18 +155,18 @@ struct TrampolineBlockPagePair
         assert(TrampolineBlockPagePair::slotSize() == 8);
         assert(TrampolineBlockPagePair::headerSize() >= sizeof(TrampolineBlockPagePair));
         assert(TrampolineBlockPagePair::headerSize() % TrampolineBlockPagePair::slotSize() == 0);
-        
-        // _objc_inform("%p %p %p", a1a2_tramphead(), a1a2_firsttramp(), 
+
+        // _objc_inform("%p %p %p", a1a2_tramphead(), a1a2_firsttramp(),
         // a1a2_trampend());
         assert(a1a2_tramphead() % PAGE_SIZE == 0);  // not PAGE_MAX_SIZE
         assert(a1a2_tramphead() + PAGE_MAX_SIZE == a1a2_trampend());
 #if SUPPORT_STRET
-        // _objc_inform("%p %p %p", a2a3_tramphead(), a2a3_firsttramp(), 
+        // _objc_inform("%p %p %p", a2a3_tramphead(), a2a3_firsttramp(),
         // a2a3_trampend());
         assert(a2a3_tramphead() % PAGE_SIZE == 0);  // not PAGE_MAX_SIZE
         assert(a2a3_tramphead() + PAGE_MAX_SIZE == a2a3_trampend());
 #endif
-        
+
 #if __arm__
         // make sure trampolines are Thumb
         extern void *_a1a2_firsttramp;
@@ -207,23 +208,23 @@ static inline void _assert_locked() {
 }
 
 #pragma mark Trampoline Management Functions
-static TrampolineBlockPagePair *_allocateTrampolinesAndData(ArgumentMode aMode) 
+static TrampolineBlockPagePair *_allocateTrampolinesAndData(ArgumentMode aMode)
 {
     _assert_locked();
 
     vm_address_t dataAddress;
-    
+
     TrampolineBlockPagePair::check();
 
     TrampolineBlockPagePair *headPagePair = headPagePairs[aMode];
-    
+
     if (headPagePair) {
         assert(headPagePair->nextAvailablePage == nil);
     }
-    
+
     kern_return_t result;
     for (int i = 0; i < 5; i++) {
-         result = vm_allocate(mach_task_self(), &dataAddress, 
+         result = vm_allocate(mach_task_self(), &dataAddress,
                               PAGE_MAX_SIZE * 2,
                               TRUE | VM_MAKE_TAG(VM_MEMORY_FOUNDATION));
         if (result != KERN_SUCCESS) {
@@ -237,7 +238,7 @@ static TrampolineBlockPagePair *_allocateTrampolinesAndData(ArgumentMode aMode)
             mach_error("vm_deallocate failed", result);
             return nil;
         }
-        
+
         uintptr_t codePage;
         switch(aMode) {
             case ReturnValueInRegisterArgumentMode:
@@ -253,72 +254,72 @@ static TrampolineBlockPagePair *_allocateTrampolinesAndData(ArgumentMode aMode)
                 break;
         }
         vm_prot_t currentProtection, maxProtection;
-        result = vm_remap(mach_task_self(), &codeAddress, PAGE_MAX_SIZE, 
-                          0, FALSE, mach_task_self(), codePage, TRUE, 
+        result = vm_remap(mach_task_self(), &codeAddress, PAGE_MAX_SIZE,
+                          0, FALSE, mach_task_self(), codePage, TRUE,
                           &currentProtection, &maxProtection, VM_INHERIT_SHARE);
         if (result != KERN_SUCCESS) {
-            result = vm_deallocate(mach_task_self(), 
+            result = vm_deallocate(mach_task_self(),
                                    dataAddress, PAGE_MAX_SIZE);
             if (result != KERN_SUCCESS) {
                 mach_error("vm_deallocate for retry failed.", result);
                 return nil;
-            } 
+            }
         } else {
             break;
         }
     }
-    
+
     if (result != KERN_SUCCESS) {
-        return nil; 
+        return nil;
     }
-    
+
     TrampolineBlockPagePair *pagePair = (TrampolineBlockPagePair *) dataAddress;
     pagePair->nextAvailable = pagePair->startIndex();
     pagePair->nextPagePair = nil;
     pagePair->nextAvailablePage = nil;
-    
+
     if (headPagePair) {
         TrampolineBlockPagePair *lastPagePair = headPagePair;
         while(lastPagePair->nextPagePair)
             lastPagePair = lastPagePair->nextPagePair;
-        
+
         lastPagePair->nextPagePair = pagePair;
         headPagePairs[aMode]->nextAvailablePage = pagePair;
     } else {
         headPagePairs[aMode] = pagePair;
     }
-    
+
     return pagePair;
 }
 
 static TrampolineBlockPagePair *
-_getOrAllocatePagePairWithNextAvailable(ArgumentMode aMode) 
+_getOrAllocatePagePairWithNextAvailable(ArgumentMode aMode)
 {
     _assert_locked();
-    
+
     TrampolineBlockPagePair *headPagePair = headPagePairs[aMode];
 
     if (!headPagePair)
         return _allocateTrampolinesAndData(aMode);
-    
+
     // make sure head page is filled first
     if (headPagePair->nextAvailable != headPagePair->endIndex())
         return headPagePair;
-    
+
     if (headPagePair->nextAvailablePage) // check if there is a page w/a hole
         return headPagePair->nextAvailablePage;
-    
+
     return _allocateTrampolinesAndData(aMode); // tack on a new one
 }
 
 static TrampolineBlockPagePair *
-_pageAndIndexContainingIMP(IMP anImp, uintptr_t *outIndex, 
-                           TrampolineBlockPagePair **outHeadPagePair) 
+_pageAndIndexContainingIMP(IMP anImp, uintptr_t *outIndex,
+                           TrampolineBlockPagePair **outHeadPagePair)
 {
     _assert_locked();
 
     for (int arg = 0; arg < ArgumentModeCount; arg++) {
-        for (TrampolineBlockPagePair *pagePair = headPagePairs[arg]; 
+        for (TrampolineBlockPagePair *pagePair = headPagePairs[arg];
              pagePair;
              pagePair = pagePair->nextPagePair)
         {
@@ -330,13 +331,13 @@ _pageAndIndexContainingIMP(IMP anImp, uintptr_t *outIndex,
             }
         }
     }
-    
+
     return nil;
 }
 
 
-static ArgumentMode 
-_argumentModeForBlock(id block) 
+static ArgumentMode
+_argumentModeForBlock(id block)
 {
     ArgumentMode aMode = ReturnValueInRegisterArgumentMode;
 
@@ -346,20 +347,20 @@ _argumentModeForBlock(id block)
 #else
     assert(! (_Block_has_signature(block) && _Block_use_stret(block)));
 #endif
-    
+
     return aMode;
 }
 
 
-// `block` must already have been copied 
-IMP 
+// `block` must already have been copied
+IMP
 _imp_implementationWithBlockNoCopy(id block)
 {
     _assert_locked();
 
     ArgumentMode aMode = _argumentModeForBlock(block);
 
-    TrampolineBlockPagePair *pagePair = 
+    TrampolineBlockPagePair *pagePair =
         _getOrAllocatePagePairWithNextAvailable(aMode);
     if (!headPagePairs[aMode])
         headPagePairs[aMode] = pagePair;
@@ -367,7 +368,7 @@ _imp_implementationWithBlockNoCopy(id block)
     uintptr_t index = pagePair->nextAvailable;
     assert(index >= pagePair->startIndex()  &&  index < pagePair->endIndex());
     TrampolineBlockPagePair::Payload *payload = pagePair->payload(index);
-    
+
     uintptr_t nextAvailableIndex = payload->nextAvailable;
     if (nextAvailableIndex == 0) {
         // First time through (unused slots are zero). Fill sequentially.
@@ -387,14 +388,14 @@ _imp_implementationWithBlockNoCopy(id block)
             pagePair->nextAvailablePage = nil;
         }
     }
-    
+
     payload->block = block;
     return pagePair->trampoline(index);
 }
 
 
 #pragma mark Public API
-IMP imp_implementationWithBlock(id block) 
+IMP imp_implementationWithBlock(id block)
 {
     block = Block_copy(block);
     _lock();
@@ -407,28 +408,28 @@ IMP imp_implementationWithBlock(id block)
 id imp_getBlock(IMP anImp) {
     uintptr_t index;
     TrampolineBlockPagePair *pagePair;
-    
+
     if (!anImp) return nil;
-    
+
     _lock();
-    
+
     pagePair = _pageAndIndexContainingIMP(anImp, &index, nil);
-    
+
     if (!pagePair) {
         _unlock();
         return nil;
     }
 
     TrampolineBlockPagePair::Payload *payload = pagePair->payload(index);
-    
+
     if (payload->nextAvailable <= TrampolineBlockPagePair::endIndex()) {
         // unallocated
         _unlock();
         return nil;
     }
-    
+
     _unlock();
-    
+
     return payload->block;
 }
 
@@ -436,12 +437,12 @@ BOOL imp_removeBlock(IMP anImp) {
     TrampolineBlockPagePair *pagePair;
     TrampolineBlockPagePair *headPagePair;
     uintptr_t index;
-    
+
     if (!anImp) return NO;
-    
+
     _lock();
     pagePair = _pageAndIndexContainingIMP(anImp, &index, &headPagePair);
-    
+
     if (!pagePair) {
         _unlock();
         return NO;
@@ -450,27 +451,27 @@ BOOL imp_removeBlock(IMP anImp) {
     TrampolineBlockPagePair::Payload *payload = pagePair->payload(index);
     id block = payload->block;
     // block is released below
-    
+
     payload->nextAvailable = pagePair->nextAvailable;
     pagePair->nextAvailable = index;
-    
+
     // make sure this page is on available linked list
     TrampolineBlockPagePair *pagePairIterator = headPagePair;
-    
+
     // see if page is the next available page for any existing pages
-    while (pagePairIterator->nextAvailablePage && 
+    while (pagePairIterator->nextAvailablePage &&
            pagePairIterator->nextAvailablePage != pagePair)
     {
         pagePairIterator = pagePairIterator->nextAvailablePage;
     }
-    
+
     if (! pagePairIterator->nextAvailablePage) {
         // if iteration stopped because nextAvail was nil
         // add to end of list.
         pagePairIterator->nextAvailablePage = pagePair;
         pagePair->nextAvailablePage = nil;
     }
-    
+
     _unlock();
     Block_release(block);
     return YES;

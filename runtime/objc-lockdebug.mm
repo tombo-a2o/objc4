@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2007 Apple Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -28,7 +28,7 @@
 
 #include "objc-private.h"
 
-#if !defined(NDEBUG)  &&  !TARGET_OS_WIN32
+#if !defined(NDEBUG)  &&  !TARGET_OS_WIN32 && !TARGET_OS_EMSCRIPTEN
 
 /***********************************************************************
 * Recording - per-thread list of mutexes and monitors held
@@ -67,7 +67,7 @@ getLocks(BOOL create)
 {
     _objc_lock_list *locks;
 
-    // Use a dedicated tls key to prevent differences vs non-debug in 
+    // Use a dedicated tls key to prevent differences vs non-debug in
     // usage of objc's other tls keys (required for some unit tests).
     INIT_ONCE_PTR(lock_tls, tls_create(&destroyLocks), (void)0);
 
@@ -100,12 +100,12 @@ getLocks(BOOL create)
     return locks;
 }
 
-static BOOL 
+static BOOL
 hasLock(_objc_lock_list *locks, void *lock, int kind)
 {
     int i;
     if (!locks) return NO;
-    
+
     for (i = 0; i < locks->used; i++) {
         if (locks->list[i].l == lock  &&  locks->list[i].k == kind) return YES;
     }
@@ -113,7 +113,7 @@ hasLock(_objc_lock_list *locks, void *lock, int kind)
 }
 
 
-static void 
+static void
 setLock(_objc_lock_list *locks, void *lock, int kind)
 {
     int i;
@@ -130,7 +130,7 @@ setLock(_objc_lock_list *locks, void *lock, int kind)
     locks->used++;
 }
 
-static void 
+static void
 clearLock(_objc_lock_list *locks, void *lock, int kind)
 {
     int i;
@@ -152,20 +152,20 @@ clearLock(_objc_lock_list *locks, void *lock, int kind)
 * Mutex checking
 **********************************************************************/
 
-int 
+int
 _mutex_lock_debug(mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(YES);
-    
+
     if (hasLock(locks, lock, MUTEX)) {
         _objc_fatal("deadlock: relocking mutex %s\n", name+1);
     }
     setLock(locks, lock, MUTEX);
-    
+
     return _mutex_lock_nodebug(lock);
 }
 
-int 
+int
 _mutex_try_lock_debug(mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(YES);
@@ -180,7 +180,7 @@ _mutex_try_lock_debug(mutex_t *lock, const char *name)
     return result;
 }
 
-int 
+int
 _mutex_unlock_debug(mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -193,7 +193,7 @@ _mutex_unlock_debug(mutex_t *lock, const char *name)
     return _mutex_unlock_nodebug(lock);
 }
 
-void 
+void
 _mutex_assert_locked_debug(mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -204,7 +204,7 @@ _mutex_assert_locked_debug(mutex_t *lock, const char *name)
 }
 
 
-void 
+void
 _mutex_assert_unlocked_debug(mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -219,17 +219,17 @@ _mutex_assert_unlocked_debug(mutex_t *lock, const char *name)
 * Recursive mutex checking
 **********************************************************************/
 
-int 
+int
 _recursive_mutex_lock_debug(recursive_mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(YES);
-    
+
     setLock(locks, lock, RECURSIVE);
-    
+
     return _recursive_mutex_lock_nodebug(lock);
 }
 
-int 
+int
 _recursive_mutex_try_lock_debug(recursive_mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(YES);
@@ -243,7 +243,7 @@ _recursive_mutex_try_lock_debug(recursive_mutex_t *lock, const char *name)
     return result;
 }
 
-int 
+int
 _recursive_mutex_unlock_debug(recursive_mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -256,7 +256,7 @@ _recursive_mutex_unlock_debug(recursive_mutex_t *lock, const char *name)
     return _recursive_mutex_unlock_nodebug(lock);
 }
 
-void 
+void
 _recursive_mutex_assert_locked_debug(recursive_mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -267,7 +267,7 @@ _recursive_mutex_assert_locked_debug(recursive_mutex_t *lock, const char *name)
 }
 
 
-void 
+void
 _recursive_mutex_assert_unlocked_debug(recursive_mutex_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -282,7 +282,7 @@ _recursive_mutex_assert_unlocked_debug(recursive_mutex_t *lock, const char *name
 * Monitor checking
 **********************************************************************/
 
-int 
+int
 _monitor_enter_debug(monitor_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(YES);
@@ -295,7 +295,7 @@ _monitor_enter_debug(monitor_t *lock, const char *name)
     return _monitor_enter_nodebug(lock);
 }
 
-int 
+int
 _monitor_exit_debug(monitor_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -308,7 +308,7 @@ _monitor_exit_debug(monitor_t *lock, const char *name)
     return _monitor_exit_nodebug(lock);
 }
 
-int 
+int
 _monitor_wait_debug(monitor_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -320,7 +320,7 @@ _monitor_wait_debug(monitor_t *lock, const char *name)
     return _monitor_wait_nodebug(lock);
 }
 
-void 
+void
 _monitor_assert_locked_debug(monitor_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -330,7 +330,7 @@ _monitor_assert_locked_debug(monitor_t *lock, const char *name)
     }
 }
 
-void 
+void
 _monitor_assert_unlocked_debug(monitor_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -362,7 +362,7 @@ _rwlock_read_debug(rwlock_t *lock, const char *name)
     _rwlock_read_nodebug(lock);
 }
 
-int 
+int
 _rwlock_try_read_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(YES);
@@ -378,7 +378,7 @@ _rwlock_try_read_debug(rwlock_t *lock, const char *name)
     return result;
 }
 
-void 
+void
 _rwlock_unlock_read_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -409,7 +409,7 @@ _rwlock_write_debug(rwlock_t *lock, const char *name)
 }
 
 
-int 
+int
 _rwlock_try_write_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(YES);
@@ -425,7 +425,7 @@ _rwlock_try_write_debug(rwlock_t *lock, const char *name)
     return result;
 }
 
-void 
+void
 _rwlock_unlock_write_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -439,7 +439,7 @@ _rwlock_unlock_write_debug(rwlock_t *lock, const char *name)
 }
 
 
-void 
+void
 _rwlock_assert_reading_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -449,7 +449,7 @@ _rwlock_assert_reading_debug(rwlock_t *lock, const char *name)
     }
 }
 
-void 
+void
 _rwlock_assert_writing_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
@@ -459,18 +459,18 @@ _rwlock_assert_writing_debug(rwlock_t *lock, const char *name)
     }
 }
 
-void 
+void
 _rwlock_assert_locked_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);
 
     if (!hasLock(locks, lock, RDLOCK)  &&  !hasLock(locks, lock, WRLOCK)) {
-        _objc_fatal("rwlock %s incorrectly neither reading nor writing\n", 
+        _objc_fatal("rwlock %s incorrectly neither reading nor writing\n",
                     name+1);
     }
 }
 
-void 
+void
 _rwlock_assert_unlocked_debug(rwlock_t *lock, const char *name)
 {
     _objc_lock_list *locks = getLocks(NO);

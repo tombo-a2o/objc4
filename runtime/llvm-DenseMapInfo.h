@@ -48,7 +48,7 @@ struct DenseMapInfo<T*> {
 
 // Provide DenseMapInfo for disguised pointers.
 template<typename T>
-struct DenseMapInfo<DisguisedPtr<T>> {
+struct DenseMapInfo<DisguisedPtr<T> > {
   static inline DisguisedPtr<T> getEmptyKey() {
     return DisguisedPtr<T>((T*)(uintptr_t)-1);
   }
@@ -59,20 +59,20 @@ struct DenseMapInfo<DisguisedPtr<T>> {
       return ptr_hash((uintptr_t)PtrVal);
   }
   static bool isEqual(const DisguisedPtr<T> &LHS, const DisguisedPtr<T> &RHS) {
-      return LHS == RHS; 
+      return LHS == RHS;
   }
 };
 
 // Provide DenseMapInfo for cstrings.
 template<> struct DenseMapInfo<const char*> {
-  static inline const char* getEmptyKey() { 
-    return reinterpret_cast<const char *>((intptr_t)-1); 
+  static inline const char* getEmptyKey() {
+    return reinterpret_cast<const char *>((intptr_t)-1);
   }
-  static inline const char* getTombstoneKey() { 
-    return reinterpret_cast<const char *>((intptr_t)-2); 
+  static inline const char* getTombstoneKey() {
+    return reinterpret_cast<const char *>((intptr_t)-2);
   }
-  static unsigned getHashValue(const char* const &Val) { 
-    return _objc_strhash(Val); 
+  static unsigned getHashValue(const char* const &Val) {
+    return _objc_strhash(Val);
   }
   static bool isEqual(const char* const &LHS, const char* const &RHS) {
     return 0 == strcmp(LHS, RHS);
@@ -88,7 +88,7 @@ template<> struct DenseMapInfo<char> {
     return LHS == RHS;
   }
 };
-  
+
 // Provide DenseMapInfo for unsigned ints.
 template<> struct DenseMapInfo<unsigned> {
   static inline unsigned getEmptyKey() { return ~0U; }
