@@ -629,7 +629,6 @@ static inline int monitor_notifyAll(monitor_t *c) {
 #define _rwlock_unlock_read_nodebug(m) _mutex_unlock_nodebug(m)
 #define _rwlock_unlock_write_nodebug(m) _mutex_unlock_nodebug(m)
 
-
 typedef IMAGE_DOS_HEADER headerType;
 // fixme YES bundle? NO bundle? sometimes?
 #define headerIsBundle(hi) YES

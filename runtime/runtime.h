@@ -1719,7 +1719,6 @@ struct objc_cache {
     Method buckets[1]                                        OBJC2_UNAVAILABLE;
 };
 
-
 typedef struct objc_module *Module                           OBJC2_UNAVAILABLE;
 
 struct objc_module {

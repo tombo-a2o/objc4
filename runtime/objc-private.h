@@ -511,7 +511,7 @@ extern mutex_t methodListLock;
 #endif
 
 /* Lock debugging */
-#if defined(NDEBUG)  ||  TARGET_OS_WIN32
+#if defined(NDEBUG)  ||  TARGET_OS_WIN32 || 1
 
 #define mutex_lock(m)             _mutex_lock_nodebug(m)
 #define mutex_try_lock(m)         _mutex_try_lock_nodebug(m)

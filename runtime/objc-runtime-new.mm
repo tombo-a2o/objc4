@@ -4929,7 +4929,7 @@ Method class_getInstanceMethod(Class cls, SEL sel)
 static void
 log_and_fill_cache(Class cls, Class implementer, IMP imp, SEL sel)
 {
-#if SUPPORT_MESSAGE_LOGGING
+#if SUPPORT_MESSAGE_LOGGING && 0
     if (objcMsgLogEnabled) {
         bool cacheIt = logMessageSend(implementer->isMetaClass(),
                                       cls->nameForLogging(),
