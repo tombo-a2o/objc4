@@ -1049,8 +1049,10 @@ static bool scanMangledField(const char *&string, const char *end,
         char c = *field;
         if (!isdigit(c)) break;
         field++;
-        if (__builtin_smul_overflow(length, 10, &length)) return false;
-        if (__builtin_sadd_overflow(length, c - '0', &length)) return false;
+        //if (__builtin_smul_overflow(length, 10, &length)) return false;
+        //if (__builtin_sadd_overflow(length, c - '0', &length)) return false;
+        length *= length * 10;
+        length += c - '0';
     }
 
     string = field + length;
