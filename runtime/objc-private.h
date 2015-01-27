@@ -779,14 +779,14 @@ extern void layout_bitmap_print(layout_bitmap bits);
 
 // fixme runtime
 extern Class look_up_class(const char *aClassName, BOOL includeUnconnected, BOOL includeClassHandler);
-//extern const char *map_images(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
-//extern const char *map_images_nolock(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
-//extern const char * load_images(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
-//extern BOOL load_images_nolock(enum dyld_image_states state, uint32_t infoCount, const struct dyld_image_info infoList[]);
+extern const char *map_images();
+extern const char *map_images_nolock();
+extern const char * load_images();
+extern BOOL load_images_nolock();
 //extern void unmap_image(const struct mach_header *mh, intptr_t vmaddr_slide);
 //extern void unmap_image_nolock(const struct mach_header *mh);
-//extern void _read_images(header_info **hList, uint32_t hCount);
-//extern void prepare_load_methods(header_info *hi);
+extern void _read_images(header_info **hList, uint32_t hCount);
+extern void prepare_load_methods(header_info *hi);
 //extern void _unload_image(header_info *hi);
 extern const char ** _objc_copyClassNamesForImage(header_info *hi, unsigned int *outCount);
 

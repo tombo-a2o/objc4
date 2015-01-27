@@ -75,11 +75,13 @@ rwlock_t selLock;
 mutex_t cacheUpdateLock = MUTEX_INITIALIZER;
 recursive_mutex_t loadMethodLock = RECURSIVE_MUTEX_INITIALIZER;
 
+#include <emscripten.h>
+
 void lock_init(void)
 {
     rwlock_init(&selLock);
     rwlock_init(&runtimeLock);
-    recursive_mutex_init(&loadMethodLock);
+//    recursive_mutex_init(&loadMethodLock);
 }
 
 
@@ -2458,19 +2460,16 @@ void _objc_flush_caches(Class cls)
 *
 * Locking: write-locks runtimeLock
 **********************************************************************/
-/*
 const char *
-map_images(enum dyld_image_states state, uint32_t infoCount,
-           const struct dyld_image_info infoList[])
+map_images()
 {
     const char *err;
 
     rwlock_write(&runtimeLock);
-    err = map_images_nolock(state, infoCount, infoList);
+    err = map_images_nolock();
     rwlock_unlock_write(&runtimeLock);
     return err;
 }
-*/
 
 /***********************************************************************
 * load_images
@@ -2479,18 +2478,17 @@ map_images(enum dyld_image_states state, uint32_t infoCount,
 *
 * Locking: write-locks runtimeLock and loadMethodLock
 **********************************************************************/
-/*
 const char *
-load_images(enum dyld_image_states state, uint32_t infoCount,
-            const struct dyld_image_info infoList[])
+load_images()
 {
     BOOL found;
 
-    recursive_mutex_lock(&loadMethodLock);
+	// TODO
+    //recursive_mutex_lock(&loadMethodLock);
 
     // Discover load methods
     rwlock_write(&runtimeLock);
-    found = load_images_nolock(state, infoCount, infoList);
+    found = load_images_nolock();
     rwlock_unlock_write(&runtimeLock);
 
     // Call +load methods (without runtimeLock - re-entrant)
@@ -2498,11 +2496,11 @@ load_images(enum dyld_image_states state, uint32_t infoCount,
         call_load_methods();
     }
 
-    recursive_mutex_unlock(&loadMethodLock);
+	// TODO
+    //recursive_mutex_unlock(&loadMethodLock);
 
     return nil;
 }
-*/
 
 /***********************************************************************
 * unmap_image
@@ -2740,7 +2738,8 @@ void _read_images(header_info **hList, uint32_t hCount)
         bool headerInSharedCache = hi->inSharedCache;
 
         classref_t *classlist = _getObjc2ClassList(hi, &count);
-        for (i = 0; i < count; i++) {
+        //for (i = 0; i < count; i++) {
+        for (i = 0; i < count; i+=2) {
             Class cls = (Class)classlist[i];
             Class newCls = readClass(cls, headerIsBundle, headerInSharedCache);
 

@@ -1086,6 +1086,303 @@ malloc_zone_t *_objc_internal_zone(void)
     return NULL;
 }
 
+#include "objc-file.h"
+
+void mutex_init(mutex_t *m)
+{
+    pthread_mutex_init(m, NULL);
+}
+
+
+void recursive_mutex_init(recursive_mutex_t *m)
+{
+    // fixme error checking
+    pthread_mutex_t *newmutex;
+
+    // Build recursive mutex attributes, if needed
+    static pthread_mutexattr_t *attr;
+    if (!attr) {
+        pthread_mutexattr_t *newattr = (pthread_mutexattr_t *)
+            _malloc_internal(sizeof(pthread_mutexattr_t));
+        pthread_mutexattr_init(newattr);
+        pthread_mutexattr_settype(newattr, PTHREAD_MUTEX_RECURSIVE);
+        while (!attr) {
+            if (OSAtomicCompareAndSwapPtrBarrier(0, newattr, (void**)&attr)) {
+                // we win
+                goto attr_done;
+            }
+        }
+        // someone else built the attr first
+        _free_internal(newattr);
+    }
+ attr_done:
+
+    // Build the mutex itself
+    newmutex = (pthread_mutex_t *)_malloc_internal(sizeof(pthread_mutex_t));
+    pthread_mutex_init(newmutex, attr);
+    while (!m->mutex) {
+        if (OSAtomicCompareAndSwapPtrBarrier(0, newmutex, (void**)&m->mutex)) {
+            // we win
+            return;
+        }
+    }
+
+    // someone else installed their mutex first
+    pthread_mutex_destroy(newmutex);
+}
+
+
+static header_info * addHeader(const headerType *mhdr)
+{
+    header_info *hi;
+
+    {
+        // Didn't find an hinfo in the dyld shared cache.
+
+        // Weed out duplicates
+        for (hi = FirstHeader; hi; hi = hi->next) {
+            if (mhdr == hi->mhdr) return NULL;
+        }
+
+        // Allocate a header_info entry.
+        hi = (header_info *)_calloc_internal(sizeof(header_info), 1);
+
+        // Set up the new header_info entry.
+        hi->mhdr = mhdr;
+        hi->info = NULL;
+        hi->fname = "noname";
+        hi->loaded = true;
+        hi->inSharedCache = false;
+        hi->allClassesRealized = NO;
+    }
+
+    appendHeader(hi);
+
+    return hi;
+}
+
+const char *_gcForHInfo(const header_info *hinfo)
+{
+    return "";
+}
+const char *_gcForHInfo2(const header_info *hinfo)
+{
+    return "";
+}
+
+/***********************************************************************
+* getSDKVersion
+* Look up the build-time SDK version for an image.
+* Version X.Y.Z is encoded as 0xXXXXYYZZ.
+* Images without the load command are assumed to be old (version 0.0.0).
+**********************************************************************/
+static uint32_t
+getSDKVersion(const header_info *hi)
+{
+    return 0;
+}
+
+
+/***********************************************************************
+* map_images_nolock
+* Process the given images which are being mapped in by dyld.
+* All class registration and fixups are performed (or deferred pending
+* discovery of missing superclasses etc), and +load methods are called.
+*
+* info[] is in bottom-up order i.e. libobjc will be earlier in the
+* array than any library that links to libobjc.
+*
+* Locking: loadMethodLock(old) or runtimeLock(new) acquired by map_images.
+**********************************************************************/
+#if __OBJC2__
+#include "objc-file.h"
+#else
+#include "objc-file-old.h"
+#endif
+
+const char *
+map_images_nolock()
+{
+	uint32_t infoCount = 1;
+    static BOOL firstTime = YES;
+    static BOOL wantsGC = NO;
+    uint32_t i;
+    header_info *hi;
+    header_info *hList[infoCount];
+    uint32_t hCount;
+    size_t selrefCount = 0;
+
+    // Perform first-time initialization if necessary.
+    // This function is called before ordinary library initializers.
+    // fixme defer initialization until an objc-using image is found?
+    if (firstTime) {
+        preopt_init();
+#if SUPPORT_GC
+        InitialDyldRegistration = YES;
+        dyld_register_image_state_change_handler(dyld_image_state_mapped, 0 /* batch */, &gc_enforcer);
+        InitialDyldRegistration = NO;
+#endif
+    }
+
+    if (PrintImages) {
+        _objc_inform("IMAGES: processing %u newly-mapped images...\n", infoCount);
+    }
+
+
+    // Find all images with Objective-C metadata.
+    hCount = 0;
+    i = infoCount;
+    while (i--) {
+        const headerType *mhdr = NULL;
+
+        hi = addHeader(mhdr);
+
+        {
+            AppSDKVersion = getSDKVersion(hi);
+
+            // Size some data structures based on main executable's size
+            size_t count;
+            _getObjc2SelectorRefs(hi, &count);
+            selrefCount += count;
+            _getObjc2MessageRefs(hi, &count);
+            selrefCount += count;
+        }
+
+        hList[hCount++] = hi;
+    }
+
+    // Perform one-time runtime initialization that must be deferred until
+    // the executable itself is found. This needs to be done before
+    // further initialization.
+    // (The executable may not be present in this infoList if the
+    // executable does not contain Objective-C code but Objective-C
+    // is dynamically loaded later. In that case, check_wants_gc()
+    // will do the right thing.)
+#if SUPPORT_GC
+    if (firstTime) {
+        check_wants_gc(&wantsGC);
+
+        verify_gc_readiness(wantsGC, hList, hCount);
+
+        gc_init(wantsGC);  // needs executable for GC decision
+    } else {
+        verify_gc_readiness(wantsGC, hList, hCount);
+    }
+
+    if (wantsGC) {
+        // tell the collector about the data segment ranges.
+        for (i = 0; i < hCount; ++i) {
+            uint8_t *seg;
+            unsigned long seg_size;
+            hi = hList[i];
+
+            seg = getsegmentdata(hi->mhdr, "__DATA", &seg_size);
+            if (seg) gc_register_datasegment((uintptr_t)seg, seg_size);
+
+            seg = getsegmentdata(hi->mhdr, "__OBJC", &seg_size);
+            if (seg) gc_register_datasegment((uintptr_t)seg, seg_size);
+            // __OBJC contains no GC data, but pointers to it are
+            // used as associated reference values (rdar://6953570)
+        }
+    }
+#endif
+
+    if (firstTime) {
+        sel_init(wantsGC, selrefCount);
+        arr_init();
+    }
+
+    _read_images(hList, hCount);
+
+    firstTime = NO;
+
+    return NULL;
+}
+
+
+/***********************************************************************
+* load_images_nolock
+* Prepares +load in the given images which are being mapped in by dyld.
+* Returns YES if there are now +load methods to be called by call_load_methods.
+*
+* Locking: loadMethodLock(both) and runtimeLock(new) acquired by load_images
+**********************************************************************/
+BOOL
+load_images_nolock()
+{
+    BOOL found = NO;
+    uint32_t i;
+
+    i = 1;
+    while (i--) {
+        header_info *hi;
+        for (hi = FirstHeader; hi != NULL; hi = hi->next) {
+            //const headerType *mhdr = (headerType*)infoList[i].imageLoadAddress;
+            {//if (hi->mhdr == mhdr) {
+                prepare_load_methods(hi);
+                found = YES;
+            }
+        }
+    }
+
+    return found;
+}
+
+
+/***********************************************************************
+* _headerForAddress.
+* addr can be a class or a category
+**********************************************************************/
+static const header_info *_headerForAddress(void *addr)
+{
+	// TODO
+	return FirstHeader;
+}
+
+
+/***********************************************************************
+* _headerForClass
+* Return the image header containing this class, or NULL.
+* Returns NULL on runtime-constructed classes, and the NSCF classes.
+**********************************************************************/
+const header_info *_headerForClass(Class cls)
+{
+    return _headerForAddress(cls);
+}
+
+bool crashlog_header_name(header_info *hi)
+{
+    return crashlog_header_name_string(hi ? hi->fname : NULL);
+}
+
+bool crashlog_header_name_string(const char *name)
+{
+    return true;
+}
+
+	#include <emscripten.h>
+
+__attribute__((constructor))
+void _objc_init(void)
+{
+    static bool initialized = false;
+    if (initialized) return;
+    initialized = true;
+
+    // fixme defer initialization until an objc-using image is found?
+    environ_init();
+    tls_init();
+    lock_init();
+//    exception_init();
+
+//	EM_ASM(console.log("hoge1"));
+    // Register for unmap first, in case some +load unmaps something
+    map_images();
+//	EM_ASM(console.log("hoge2"));
+    load_images();
+//	EM_ASM(console.log("hoge3"));
+}
+
 #else
 
 

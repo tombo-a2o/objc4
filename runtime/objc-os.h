@@ -1017,7 +1017,7 @@ StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
   return StoreExclusive(dst, oldvalue, value);
 }
 
-typedef struct mach_header headerType;
+typedef void headerType;
 typedef struct segment_command segmentType;
 typedef struct section sectionType;
 
