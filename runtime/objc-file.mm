@@ -114,13 +114,15 @@ _hasObjcContents(const header_info *hi)
     type *name(const header_info *hi, size_t *outCount)  \
     {                                                                   \
 		unsigned long count = *outCount = EM_ASM_INT_V({					\
-			return EM_OBJC_METADATA[sectname].length;							\
+			false && console.log(EMSCRIPTEN_OBJC_METADATA[sectname].length); \
+			return EMSCRIPTEN_OBJC_METADATA[sectname].length;							\
 		}); \
 		if(count == 0) { \
 			return NULL; \
 		} else { \
 			return (type*)EM_ASM_INT_V({ \
-				return EM_OBJC_METADATA[sectname][0]; \
+				false && console.log(EMSCRIPTEN_OBJC_METADATA[sectname][0]); \
+				return EMSCRIPTEN_OBJC_METADATA[sectname][0]; \
 			}); \
 		} \
     }
