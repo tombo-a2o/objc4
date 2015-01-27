@@ -1,10 +1,9 @@
 #include "objc-private.h"
 #include "objc.h"
 
-#include <stdarg.h>
-
 extern "C" {
 
+/*
 typedef struct bucket_t *pbucket;
 
 id objc_msgSend(id self, SEL sel, ...)
@@ -62,5 +61,5 @@ label1:
 	key = (bucket+1)->key();
 	goto label2;
 }
-
+*/
 }
