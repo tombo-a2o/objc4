@@ -75,8 +75,6 @@ rwlock_t selLock;
 mutex_t cacheUpdateLock = MUTEX_INITIALIZER;
 recursive_mutex_t loadMethodLock = RECURSIVE_MUTEX_INITIALIZER;
 
-#include <emscripten.h>
-
 void lock_init(void)
 {
     rwlock_init(&selLock);
@@ -2122,6 +2120,7 @@ static Class realizeClass(Class cls)
 
     if (!cls) return nil;
     if (cls->isRealized()) return cls;
+
     assert(cls == remapClass(cls));
 
     // fixme verify class is not in an un-dlopened part of the shared cache?
@@ -2257,7 +2256,7 @@ static void realizeAllClassesInImage(header_info *hi)
     classlist = _getObjc2ClassList(hi, &count);
 
     for (i = 0; i < count; i++) {
-        realizeClass(remapClass(classlist[i]));
+        realizeClass(remapClass(classlist[i*2]));
     }
 
     hi->allClassesRealized = YES;
@@ -2738,9 +2737,8 @@ void _read_images(header_info **hList, uint32_t hCount)
         bool headerInSharedCache = hi->inSharedCache;
 
         classref_t *classlist = _getObjc2ClassList(hi, &count);
-        //for (i = 0; i < count; i++) {
-        for (i = 0; i < count; i+=2) {
-            Class cls = (Class)classlist[i];
+        for (i = 0; i < count; i++) {
+            Class cls = (Class)classlist[i*2];
             Class newCls = readClass(cls, headerIsBundle, headerInSharedCache);
 
             if (newCls != cls  &&  newCls) {
@@ -2775,12 +2773,12 @@ void _read_images(header_info **hList, uint32_t hCount)
         for (EACH_HEADER) {
             Class *classrefs = _getObjc2ClassRefs(hi, &count);
             for (i = 0; i < count; i++) {
-                remapClassRef(&classrefs[i]);
+                remapClassRef(&classrefs[i*2]);
             }
             // fixme why doesn't test future1 catch the absence of this?
             classrefs = _getObjc2SuperRefs(hi, &count);
             for (i = 0; i < count; i++) {
-                remapClassRef(&classrefs[i]);
+                remapClassRef(&classrefs[i*2]);
             }
         }
     }
@@ -2805,8 +2803,8 @@ void _read_images(header_info **hList, uint32_t hCount)
         bool isBundle = YES; //hi->mhdr->filetype == MH_BUNDLE;
         SEL *sels = _getObjc2SelectorRefs(hi, &count);
         for (i = 0; i < count; i++) {
-            const char *name = sel_cname(sels[i]);
-            sels[i] = sel_registerNameNoLock(name, isBundle);
+            const char *name = sel_cname(sels[i*2]);
+            sels[i*2] = sel_registerNameNoLock(name, isBundle);
         }
     }
     sel_unlock();
@@ -2822,7 +2820,7 @@ void _read_images(header_info **hList, uint32_t hCount)
                          "call sites in %s", count, hi->fname);
         }
         for (i = 0; i < count; i++) {
-            fixupMessageRef(refs+i);
+            fixupMessageRef(refs+i*2);
         }
     }
 #endif
@@ -2837,12 +2835,12 @@ void _read_images(header_info **hList, uint32_t hCount)
         // fixme duplicate protocols from unloadable bundle
         for (i = 0; i < count; i++) {
             protocol_t *oldproto = (protocol_t *)
-                getProtocol(protolist[i]->mangledName);
+                getProtocol(protolist[i*2]->mangledName);
             if (!oldproto) {
                 size_t size = max(sizeof(protocol_t),
-                                  (size_t)protolist[i]->size);
+                                  (size_t)protolist[i*2]->size);
                 protocol_t *newproto = (protocol_t *)_calloc_internal(size, 1);
-                memcpy(newproto, protolist[i], protolist[i]->size);
+                memcpy(newproto, protolist[i*2], protolist[i*2]->size);
                 newproto->size = size; //(typeof(newproto->size))size;
 
                 newproto->initIsa(cls);  // fixme pinned
@@ -2864,7 +2862,7 @@ void _read_images(header_info **hList, uint32_t hCount)
         protocol_t **protolist;
         protolist = _getObjc2ProtocolRefs(hi, &count);
         for (i = 0; i < count; i++) {
-            remapProtocolRef(&protolist[i]);
+            remapProtocolRef(&protolist[i*2]);
         }
     }
 
@@ -2873,7 +2871,7 @@ void _read_images(header_info **hList, uint32_t hCount)
         classref_t *classlist =
             _getObjc2NonlazyClassList(hi, &count);
         for (i = 0; i < count; i++) {
-            Class cls = remapClass(classlist[i]);
+            Class cls = remapClass(classlist[i*2]);
             if (!cls) continue;
 
             // hack for class __ARCLite__, which didn't get this above
@@ -2910,13 +2908,13 @@ void _read_images(header_info **hList, uint32_t hCount)
         category_t **catlist =
             _getObjc2CategoryList(hi, &count);
         for (i = 0; i < count; i++) {
-            category_t *cat = catlist[i];
+            category_t *cat = catlist[i*2];
             Class cls = remapClass(cat->cls);
 
             if (!cls) {
                 // Category's target class is missing (probably weak-linked).
                 // Disavow any knowledge of this category.
-                catlist[i] = nil;
+                catlist[i*2] = nil;
                 if (PrintConnecting) {
                     _objc_inform("CLASS: IGNORING category \?\?\?(%s) %p with "
                                  "missing weak-linked target class",
@@ -3004,12 +3002,12 @@ void prepare_load_methods(header_info *hi)
     classref_t *classlist =
         _getObjc2NonlazyClassList(hi, &count);
     for (i = 0; i < count; i++) {
-        schedule_class_load(remapClass(classlist[i]));
+        schedule_class_load(remapClass(classlist[i*2]));
     }
 
     category_t **categorylist = _getObjc2NonlazyCategoryList(hi, &count);
     for (i = 0; i < count; i++) {
-        category_t *cat = categorylist[i];
+        category_t *cat = categorylist[i*2];
         Class cls = remapClass(cat->cls);
         if (!cls) continue;  // category for ignored weak-linked class
         realizeClass(cls);
@@ -3035,7 +3033,7 @@ void _unload_image(header_info *hi)
 
     category_t **catlist = _getObjc2CategoryList(hi, &count);
     for (i = 0; i < count; i++) {
-        category_t *cat = catlist[i];
+        category_t *cat = catlist[i*2];
         if (!cat) continue;  // category for ignored weak-linked class
         Class cls = remapClass(cat->cls);
         assert(cls);  // shouldn't have live category for dead class
@@ -3057,7 +3055,7 @@ void _unload_image(header_info *hi)
     // This avoid bugs where this loop unloads a subclass before its superclass
 
     for (i = 0; i < count; i++) {
-        Class cls = remapClass(classlist[i]);
+        Class cls = remapClass(classlist[i*2]);
         if (cls) {
             remove_class_from_loadable_list(cls);
             detach_class(cls->ISA(), YES);
@@ -3066,7 +3064,7 @@ void _unload_image(header_info *hi)
     }
 
     for (i = 0; i < count; i++) {
-        Class cls = remapClass(classlist[i]);
+        Class cls = remapClass(classlist[i*2]);
         if (cls) {
             free_class(cls->ISA());
             free_class(cls);
@@ -4593,7 +4591,7 @@ _objc_copyClassNamesForImage(header_info *hi, unsigned int *outCount)
 
     shift = 0;
     for (i = 0; i < count; i++) {
-        Class cls = remapClass(classlist[i]);
+        Class cls = remapClass(classlist[i*2]);
         if (cls) {
             names[i-shift] = cls->demangledName(true/*realize*/);
         } else {
@@ -4952,7 +4950,6 @@ IMP _class_lookupMethodAndLoadCache3(id obj, SEL sel, Class cls)
     return lookUpImpOrForward(cls, sel, obj,
                               YES/*initialize*/, NO/*cache*/, YES/*resolver*/);
 }
-
 
 /***********************************************************************
 * lookUpImpOrForward.
