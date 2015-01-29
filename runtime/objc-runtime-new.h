@@ -329,10 +329,14 @@ struct class_rw_t {
         assert((set & clear) == 0);
 
         uint32_t oldf, newf;
+		/*
+		   // TODO
         do {
             oldf = flags;
             newf = (oldf | set) & ~clear;
         } while (!OSAtomicCompareAndSwap32Barrier(oldf, newf, (volatile int32_t *)&flags));
+		*/
+		flags = (flags | set) & ~clear;
     }
 };
 
@@ -683,6 +687,7 @@ public:
     }
 };
 
+#include <emscripten.h>
 
 struct objc_class : objc_object {
     // Class ISA;
@@ -698,6 +703,7 @@ struct objc_class : objc_object {
     }
 
     void setInfo(uint32_t set) {
+		//EM_ASM_ARGS({console.log("setInfo: "+$0)}, this);
         assert(isFuture()  ||  isRealized());
         data()->setFlags(set);
     }
