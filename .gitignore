@@ -1,4 +1,5 @@
+libobjc4.bc
 .*.swp
+*.d
 *.o
-include
-objc4.bc
+include/objc/*.h

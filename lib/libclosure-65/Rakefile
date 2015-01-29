@@ -7,10 +7,13 @@ HEADER_DIR = "include"
 OBJC_HEADER_DIR = HEADER_DIR + "/objc"
 LLVMLINK="/Users/fchiba/emsdk/clang/e1.27.0_64bit/llvm-link"
 
-task "default" => ["header", "objc4.bc"]
+#task "default" => ["header", "obj"]
+task "default" => ["closure.bc"]
 
-project = Xcodeproj::Project.open("objc.xcodeproj")
-target = project.targets.select{|t| t.name == "objc"}.first
+project = Xcodeproj::Project.open("Blocks.xcodeproj")
+p project.targets
+target = project.targets.select{|t| t.name == "Blocks"}.first
+
 objc_headers = nil
 target.build_phases.each{ |phase|
 	if phase.isa == "PBXHeadersBuildPhase"
@@ -22,13 +25,11 @@ target.build_phases.each{ |phase|
 	elsif phase.isa == "PBXSourcesBuildPhase"
 		files = phase.files_references
 		files.each{ |file|
-#			p file
+			p file
 		}
-		files = files.map{|f| f.path}.select{|f| f.match(/\.m+$/) && !f.match(/trampolines/)}
-		files = files.map{|f| f.gsub(/\.m+$/, ".o")}
-		files <<  "runtime/message.o"
-		file "objc4.bc" => files do |t|
-			sh "#{LLVMLINK} -o objc4.bc #{t.prerequisites.join(" ")}"
+		files = files.map{|f| f.path.gsub(/\.c+$/, ".o")}
+		task "closure.bc" => files do |t|
+			sh "#{LLVMLINK} -o closure.bc #{t.prerequisites.join(" ")}"
 		end
 	end
 }
@@ -50,10 +51,13 @@ end
 
 
 CC = "emcc"
-INCLUDE = "-I./include -I./include/objc -I./runtime"
-COPTS = "-v -fblocks -fobjc-runtime=macosx"
-#COPTS = "-v -fblocks -s LINKABLE=1"
+INCLUDE = "-I./include -I./include/objc -I./runtime -I../../apple/objc4 -I./"
+COPTS = "-v -fblocks"
 CFLAGS="#{INCLUDE} #{COPTS}"
+
+rule ".o" => ".c" do |t|
+	sh "#{CC} #{CFLAGS} -o #{t.name} -c #{t.source}"
+end
 
 rule ".o" => ".m" do |t|
 	sh "#{CC} #{CFLAGS} -o #{t.name} -c #{t.source}"
