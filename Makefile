@@ -62,6 +62,7 @@ OBSOLETE_HEADERS= \
 	include/objc/Protocol.h
 HEADERS = $(PUBLIC_HEADERS) $(PRIVATE_HEADERS) $(OBSOLETE_HEADERS)
 DEPS := $(OBJS:.o=.d)
+LIBCLOSURE = libclosure
 
 CC = emcc
 LINK = llvm-link
@@ -69,10 +70,13 @@ CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -I./lib/libclosur
 
 .SUFFIXES: .mm .m .o
 
-all: $(LIB)
+all: $(LIB) libclosure
 
 $(LIB): $(HEADERS) $(OBJS)
 	$(LINK) -o $@ $(OBJS)
+
+libclosure:
+	cd lib/libclosure-65 && $(MAKE)
 
 clean:
 	rm -f $(LIB) $(HEADERS) $(OBJS) $(DEPS)
@@ -88,7 +92,7 @@ clean:
 include/objc/%.h: runtime/%.h
 	cp $< $@
 
-.PHONY: all clean
+.PHONY: all clean libclosure
 
 include/objc/NSObjCRuntime.h: runtime/NSObjCRuntime.h
 include/objc/NSObject.h: runtime/NSObject.h

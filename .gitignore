@@ -3,3 +3,4 @@ libobjc4.bc
 *.d
 *.o
 include/objc/*.h
+xcuserdata
