@@ -37,8 +37,7 @@
  * objc-abi.h: Declarations for functions used by compiler codegen.
  */
 
- //#include <malloc/malloc.h>
-#include <malloc.h>
+#include <malloc/malloc.h>
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <objc/message.h>

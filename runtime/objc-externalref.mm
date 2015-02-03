@@ -23,7 +23,7 @@
 
 #include "objc-private.h"
 
-#include <malloc.h>
+#include <malloc/malloc.h>
 #include <assert.h>
 #include "runtime.h"
 #include "objc-os.h"

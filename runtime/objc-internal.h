@@ -40,7 +40,7 @@
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <Availability.h>
-#include <malloc.h>
+#include <malloc/malloc.h>
 #warning "we need GCD!"
 //#include <dispatch/dispatch.h>
 

@@ -28,7 +28,7 @@
 #include "llvm-DenseMap.h"
 #include "NSObject.h"
 
-#include <malloc.h>
+#include <malloc/malloc.h>
 #include <stdint.h>
 #include <stdbool.h>
 //#include <mach/mach.h>
