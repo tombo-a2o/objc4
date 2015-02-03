@@ -1360,8 +1360,6 @@ bool crashlog_header_name_string(const char *name)
     return true;
 }
 
-	#include <emscripten.h>
-
 __attribute__((constructor))
 void _objc_init(void)
 {

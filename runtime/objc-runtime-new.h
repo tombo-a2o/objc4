@@ -687,7 +687,6 @@ public:
     }
 };
 
-#include <emscripten.h>
 
 struct objc_class : objc_object {
     // Class ISA;
@@ -703,7 +702,6 @@ struct objc_class : objc_object {
     }
 
     void setInfo(uint32_t set) {
-		//EM_ASM_ARGS({console.log("setInfo: "+$0)}, this);
         assert(isFuture()  ||  isRealized());
         data()->setFlags(set);
     }

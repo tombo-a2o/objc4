@@ -106,7 +106,6 @@ _hasObjcContents(const header_info *hi)
 }
 
 #else
-#include <emscripten.h>
 
 #warning "TODO rewrite native code"
 

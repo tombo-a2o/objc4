@@ -32,7 +32,9 @@
 #include <Availability.h>
 #include <objc/objc-api.h>
 #include <stdbool.h>
-#include <emscripten.h>
+#ifdef EMSCRIPTEN
+	#include <emscripten.h>
+#endif
 
 #if !OBJC_TYPES_DEFINED
 /// An opaque type that represents an Objective-C class.
