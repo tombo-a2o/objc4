@@ -1373,12 +1373,9 @@ void _objc_init(void)
     lock_init();
 //    exception_init();
 
-//	EM_ASM(console.log("hoge1"));
     // Register for unmap first, in case some +load unmaps something
     map_images();
-//	EM_ASM(console.log("hoge2"));
     load_images();
-//	EM_ASM(console.log("hoge3"));
 }
 
 #else
