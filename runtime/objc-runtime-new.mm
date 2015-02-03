@@ -79,7 +79,7 @@ void lock_init(void)
 {
     rwlock_init(&selLock);
     rwlock_init(&runtimeLock);
-//    recursive_mutex_init(&loadMethodLock);
+    recursive_mutex_init(&loadMethodLock);
 }
 
 
@@ -2482,8 +2482,7 @@ load_images()
 {
     BOOL found;
 
-	// TODO
-    //recursive_mutex_lock(&loadMethodLock);
+    recursive_mutex_lock(&loadMethodLock);
 
     // Discover load methods
     rwlock_write(&runtimeLock);
@@ -2495,8 +2494,7 @@ load_images()
         call_load_methods();
     }
 
-	// TODO
-    //recursive_mutex_unlock(&loadMethodLock);
+    recursive_mutex_unlock(&loadMethodLock);
 
     return nil;
 }

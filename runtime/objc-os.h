@@ -953,23 +953,23 @@ static __inline void *malloc_zone_memalign(malloc_zone_t z, size_t size, size_t 
 static __inline BOOL OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
 {
   // fixme barrier is overkill
-  return __sync_bool_compare_and_swap(dst, newl, oldl);
+  return __sync_bool_compare_and_swap(dst, oldl, newl);
 }
 
 static __inline BOOL OSAtomicCompareAndSwapPtr(void *oldp, void *newp, void * volatile *dst)
 {
   // really??????
-  return __sync_bool_compare_and_swap(dst, newp, oldp);
+  return __sync_bool_compare_and_swap(dst, oldp, newp);
 }
 
 static __inline BOOL OSAtomicCompareAndSwapPtrBarrier(void *oldp, void *newp, void * volatile *dst)
 {
-  return __sync_bool_compare_and_swap(dst, newp, oldp);
+  return __sync_bool_compare_and_swap(dst, oldp, newp);
 }
 
 static __inline BOOL OSAtomicCompareAndSwap32Barrier(int32_t oldl, int32_t newl, int32_t volatile *dst)
 {
-  return __sync_bool_compare_and_swap(dst, newl, oldl);
+  return __sync_bool_compare_and_swap(dst, oldl, newl);
 }
 
 static __inline int32_t OSAtomicDecrement32Barrier(volatile int32_t *dst)

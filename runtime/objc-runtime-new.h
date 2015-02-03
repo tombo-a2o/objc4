@@ -329,14 +329,10 @@ struct class_rw_t {
         assert((set & clear) == 0);
 
         uint32_t oldf, newf;
-		/*
-		   // TODO
         do {
             oldf = flags;
             newf = (oldf | set) & ~clear;
         } while (!OSAtomicCompareAndSwap32Barrier(oldf, newf, (volatile int32_t *)&flags));
-		*/
-		flags = (flags | set) & ~clear;
     }
 };
 
