@@ -49,6 +49,30 @@ var lib = {
 			var base_count = HEAP32[ class_ro_base_method+4 >> 2];
 			var base_first = HEAP32[ class_ro_base_method+8 >> 2];
 			*/
+		},
+		_cache_getImp: function(cls, sel) {
+			var mask = HEAP16[(cls+12)>>1]|0; // (cls->cache)._mask
+			var bucket = HEAP32[(cls+8)>>2]|0; // (cls->cache)._buckets
+	
+			var index = sel & mask;
+			var key;
+			for(bucket += index*8; (key = HEAP32[bucket>>2]|0) != 0; bucket += 8) {
+				if(key == sel) {
+					// cache hit
+					//console.log("cache hit");
+					var imp = HEAP32[(bucket+4)>>2]|0;
+					// TODO
+					// if(imp == ___objc_msgSend_uncached_impcache) return 0;
+					return imp;
+				} else if(key == 1) {
+					// cache wrap
+					//console.log("cache wrap");
+					bucket = HEAP32[(bucket+4)>>2]|0;
+				}
+			}
+			// cache miss
+			// console.log("cache miss");
+			return 0;
 		}
 	},
 
@@ -114,12 +138,6 @@ var lib = {
 	 *
 	 */
 	objc_msgSend: function(self /*objc_object*/, sel/*SEL*/ /*...*/) {
-
-		function call_imp(imp, args) {
-			//console.log("will call", imp, args);
-			return Runtime.dynCall("o", imp, args);
-		}
-
 		//console.log("objc_msgSend begin:", arguments, utils.dump_str(sel));
 
 		if(!self) {
@@ -128,33 +146,34 @@ var lib = {
 		}
 
 		var cls = HEAP32[(self+0)>>2]|0; // self->isa
-		var mask = HEAP16[(cls+12)>>1]|0; // (cls->cache)._mask
-		var bucket = HEAP32[(cls+8)>>2]|0; // (cls->cache)._buckets
-
-//		utils.dump_class(cls);
-
-		var index = sel & mask;
-		var key;
-		for(bucket += index*8; (key = HEAP32[bucket>>2]|0) != 0; bucket += 8) {
-			if(key == sel) {
-				// cache hit
-				console.log("cache hit");
-				var imp = HEAP32[(bucket+4)>>2]|0;
-				var ret = call_imp(imp, arguments);
-				//console.log("objc_msgSend begin:", arguments, utils.dump_str(sel));
-				return ret;
-			} else if(key == 1) {
-				// cache wrap
-				console.log("cache wrap");
-				bucket = HEAP32[(bucket+4)>>2]|0;
-			}
-		}
-		// cache miss
-		//console.log("cache miss");
-		var imp = __class_lookupMethodAndLoadCache3(self, sel, cls);
+		var imp = utils._cache_getImp(cls, sel);
+		if(!imp) imp = __class_lookupMethodAndLoadCache3(self, sel, cls);
 		//console.log("objc_msgSend __class_lookupMethodAndLoadCache3", imp);
-		var ret = call_imp(imp, arguments);
+		var ret = Runtime.dynCall("o", imp, arguments);
 		//console.log("objc_msgSend end:", arguments, utils.dump_str(sel), ret);
+		return ret;
+	},
+	objc_msgSendSuper: function(objcSuper /*objc_super*/, sel/*SEL*/ /*...*/) {
+		var superClass = HEAP32[(objcSuper+4)>>2]|0;
+		var imp = utils._cache_getImp(superClass, sel);
+
+		if(!imp) {
+			var self = HEAP32[(objcSuper+0)>>2]|0;
+			imp = __class_lookupMethodAndLoadCache3(self, sel, superClass);
+		}
+		var ret = Runtime.dynCall("o", imp, arguments);
+		return ret;
+	},
+	objc_msgSendSuper2: function(objcSuper /*objc_super*/, sel/*SEL*/ /*...*/) {
+		var cls = HEAP32[(objcSuper+4)>>2]|0;
+		var superClass = HEAP32[(cls+4)>>2]|0;
+		var imp = utils._cache_getImp(superClass, sel);
+
+		if(!imp) {
+			var self = HEAP32[(objcSuper+0)>>2]|0;
+			imp = __class_lookupMethodAndLoadCache3(self, sel, superClass);
+		}
+		var ret = Runtime.dynCall("o", imp, arguments);
 		return ret;
 	},
 	_objc_msgForward: function() {
@@ -167,31 +186,7 @@ var lib = {
 		throw "_objc_msgSend_uncached_impcache is unimplemented";
 	},
 	cache_getImp: function(cls, sel) {
-		//console.log("cache_getImp", cls, sel, utils.dump_str(sel));
-		//return 0;
-
-		var mask = HEAP16[(cls+12)>>1]|0; // (cls->cache)._mask
-		var bucket = HEAP32[(cls+8)>>2]|0; // (cls->cache)._buckets
-
-		var index = sel & mask;
-		var key;
-		for(bucket += index*8; (key = HEAP32[bucket>>2]|0) != 0; bucket += 8) {
-			if(key == sel) {
-				// cache hit
-				console.log("cache hit");
-				var imp = HEAP32[(bucket+4)>>2]|0;
-				// TODO
-				// if(imp == ___objc_msgSend_uncached_impcache) return 0;
-				return imp;
-			} else if(key == 1) {
-				// cache wrap
-				console.log("cache wrap");
-				bucket = HEAP32[(bucket+4)>>2]|0;
-			}
-		}
-		// cache miss
-		// console.log("cache miss");
-		return 0;
+		return utils._cache_getImp(cls, sel);
 	},
 	_objc_ignored_method: function() {
 		throw "_objc_ignored_method is unimplemented";
