@@ -4,6 +4,7 @@ OBJS := \
 	runtime/maptable.o \
 	runtime/objc-auto.o \
 	runtime/objc-cache.o \
+	runtime/objc-empty-vtable.o \
 	runtime/objc-class-old.o \
 	runtime/objc-class.o \
 	runtime/objc-errors.o \

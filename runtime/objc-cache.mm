@@ -136,14 +136,14 @@ asm("\n .section __TEXT,__const"
     "\n .globl __objc_empty_vtable"
     "\n .set __objc_empty_vtable, 0"
     );
+// from cache_t
 struct objc_cache {
-unsigned int mask;
-unsigned int occupied;
-Method buckets[1];
+	uintptr_t key;
+	IMP imp;
 };
 
-struct objc_cache _objc_empty_cache = {0, 0, {NULL}};
-IMP _objc_empty_vtable = NULL;
+struct objc_cache _objc_empty_cache = {NULL, NULL};
+//IMP _objc_empty_vtable = NULL;
 
 #if __arm__
 // objc_msgSend has few registers available.
