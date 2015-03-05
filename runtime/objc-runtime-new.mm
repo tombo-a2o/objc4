@@ -2140,6 +2140,26 @@ static Class realizeClass(Class cls)
     }
 
     isMeta = (ro->flags & RO_META) ? YES : NO;
+	/*
+	printf("realizing class %s %d %s\n", ro->name, cls, isMeta ? "META" : "");
+	int32_t *p = (int32_t*)cls;
+	int16_t *p2 = (int16_t*)cls; 
+	printf("%08x %d\n", p[0], p[0]);
+	printf("%08x %d\n", p[1], p[1]);
+	printf("%08x %d\n", p[2], p[2]);
+	printf("%08x %d %d\n", p[3], p2[6], p2[7] );
+	printf("%08x %d\n", p[4], p[4]);
+	const method_list_t *method_list = ro->baseMethods;
+	if(method_list) {
+		printf("method count=%d\n", method_list->getCount());
+		for(int i = 0; i < method_list->getCount(); i++) {
+			method_t &meth = method_list->get(i);
+			printf("meth=%d name=%s SEL=%d IMP=%d\n", &meth, sel_getName(meth.name), meth.name, meth.imp);
+		}
+	}
+	printf("mask=%d\n",cls->cache.mask());
+	printf("buckets=%d\n",cls->cache.buckets());
+	*/
 
     rw->version = isMeta ? 7 : 0;  // old runtime went up to 6
 
@@ -2541,6 +2561,7 @@ static unsigned int PreoptOptimizedClasses;
 Class readClass(Class cls, bool headerIsBundle, bool headerInSharedCache)
 {
     const char *mangledName = cls->mangledName();
+	//printf("readClass mangledName=%s\n", mangledName);
 
     if (missingWeakSuperclass(cls)) {
         // No superclass (probably weak-linked).
@@ -5013,6 +5034,7 @@ IMP lookUpImpOrForward(Class cls, SEL sel, id inst,
     // Try this class's method lists.
 
     meth = getMethodNoSuper_nolock(cls, sel);
+	//printf("meth=%d\n",meth);
     if (meth) {
         log_and_fill_cache(cls, cls, meth->imp, sel);
         imp = meth->imp;
@@ -5023,6 +5045,7 @@ IMP lookUpImpOrForward(Class cls, SEL sel, id inst,
 
     curClass = cls;
     while ((curClass = curClass->superclass)) {
+		//printf("curClass=%d\n", curClass);
         // Superclass cache.
         imp = cache_getImp(curClass, sel);
         if (imp) {
@@ -5041,6 +5064,7 @@ IMP lookUpImpOrForward(Class cls, SEL sel, id inst,
 
         // Superclass method list.
         meth = getMethodNoSuper_nolock(curClass, sel);
+		//printf("super meth=%d\n", meth);
         if (meth) {
             log_and_fill_cache(cls, curClass, meth->imp, sel);
             imp = meth->imp;
@@ -5048,6 +5072,7 @@ IMP lookUpImpOrForward(Class cls, SEL sel, id inst,
         }
     }
 
+	//printf("not found\n");
     // No implementation found. Try method resolver once.
 
     if (resolver  &&  !triedResolver) {

@@ -54,6 +54,16 @@ var lib = {
 			var mask = HEAP16[(cls+12)>>1]|0; // (cls->cache)._mask
 			var bucket = HEAP32[(cls+8)>>2]|0; // (cls->cache)._buckets
 	
+			/*
+			console.log("cache mask", mask);
+			console.log("cache bucket", bucket);
+			for(var i = 0; i < mask+1; i++) {
+				var x = bucket + i * 8;
+				console.log("key", HEAP32[x>>2]);
+				console.log("imp", HEAP32[(x+4)>>2]);
+			}
+			*/
+
 			var index = sel & mask;
 			var key;
 			for(bucket += index*8; (key = HEAP32[bucket>>2]|0) != 0; bucket += 8) {
@@ -147,8 +157,12 @@ var lib = {
 
 		var cls = HEAP32[(self+0)>>2]|0; // self->isa
 		var imp = utils._cache_getImp(cls, sel);
-		if(!imp) imp = __class_lookupMethodAndLoadCache3(self, sel, cls);
-		//console.log("objc_msgSend __class_lookupMethodAndLoadCache3", imp);
+		if(!imp) {
+			imp = __class_lookupMethodAndLoadCache3(self, sel, cls);
+			//console.log("objc_msgSend __class_lookupMethodAndLoadCache3", imp);
+		} else {
+			//console.log("cache hit", imp);
+		}
 		var ret = Runtime.dynCall("o", imp, arguments);
 		//console.log("objc_msgSend end:", arguments, utils.dump_str(sel), ret);
 		return ret;
@@ -165,6 +179,7 @@ var lib = {
 		return ret;
 	},
 	objc_msgSendSuper2: function(objcSuper /*objc_super*/, sel/*SEL*/ /*...*/) {
+		//console.log("objc_msgSendSuper2", objcSuper, sel);
 		var cls = HEAP32[(objcSuper+4)>>2]|0;
 		var superClass = HEAP32[(cls+4)>>2]|0;
 		var imp = utils._cache_getImp(superClass, sel);
