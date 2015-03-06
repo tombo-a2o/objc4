@@ -179,16 +179,18 @@ var lib = {
 		return ret;
 	},
 	objc_msgSendSuper2: function(objcSuper /*objc_super*/, sel/*SEL*/ /*...*/) {
-		//console.log("objc_msgSendSuper2", objcSuper, sel);
 		var cls = HEAP32[(objcSuper+4)>>2]|0;
 		var superClass = HEAP32[(cls+4)>>2]|0;
+		//console.log("objc_msgSendSuper2", objcSuper, cls, superClass, sel);
 		var imp = utils._cache_getImp(superClass, sel);
 
+		var self = HEAP32[(objcSuper+0)>>2]|0;
 		if(!imp) {
-			var self = HEAP32[(objcSuper+0)>>2]|0;
 			imp = __class_lookupMethodAndLoadCache3(self, sel, superClass);
 		}
-		var ret = Runtime.dynCall("o", imp, arguments);
+		var realArgs = Array.prototype.slice.call(arguments, 1);
+		realArgs.unshift(self);
+		var ret = Runtime.dynCall("o", imp, realArgs);
 		return ret;
 	},
 	_objc_msgForward: function() {
