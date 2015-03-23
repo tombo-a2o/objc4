@@ -1,9 +1,9 @@
-LIB := libclosure.bc
+LIB := libclosure.a
 OBJS := data.o runtime.o
 DEPS := $(OBJS:.o=.d)
 
 CC = emcc
-LINK = llvm-link
+LINK = emar
 CFLAGS = -I./ -I../../include
 
 .SUFFIXES: .c .o
@@ -11,7 +11,7 @@ CFLAGS = -I./ -I../../include
 all: $(LIB)
 
 $(LIB): $(HEADERS) $(OBJS)
-	$(LINK) -o $@ $(OBJS)
+	$(LINK) rcs $@ $(OBJS)
 
 clean:
 	rm -f $(LIB) $(HEADERS) $(OBJS) $(DEPS)
@@ -21,4 +21,7 @@ clean:
 .c.o:
 	$(CC) $(CFLAGS) -MMD -MP -MF $(@:%.o=%.d) -o $@ $<
 
-.PHONY: all clean
+install:
+	cp libclosure.a $(EMSCRIPTEN)/system/local/lib/
+
+.PHONY: all clean install

@@ -1,4 +1,4 @@
-LIB := libobjc4.bc
+LIB := libobjc4.a
 OBJS := \
 	runtime/hashtable2.o \
 	runtime/maptable.o \
@@ -66,7 +66,7 @@ DEPS := $(OBJS:.o=.d)
 LIBCLOSURE = libclosure
 
 CC = emcc
-LINK = llvm-link
+LINK = emar
 CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -I./lib/libclosure-65 -fblocks -fobjc-runtime=macosx
 
 .SUFFIXES: .mm .m .o
@@ -74,7 +74,7 @@ CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -I./lib/libclosur
 all: $(LIB) libclosure
 
 $(LIB): $(HEADERS) $(OBJS)
-	$(LINK) -o $@ $(OBJS)
+	$(LINK) rcs $@ $(OBJS)
 
 libclosure:
 	cd lib/libclosure-65 && $(MAKE)
@@ -93,7 +93,13 @@ clean:
 include/objc/%.h: runtime/%.h
 	cp $< $@
 
-.PHONY: all clean libclosure
+install: $(LIB)
+	cp $(LIB) $(EMSCRIPTEN)/system/local/lib/
+
+install-all: install
+	cd lib/libclosure-65 && $(MAKE) install
+
+.PHONY: all clean libclosure install install-all
 
 include/objc/NSObjCRuntime.h: runtime/NSObjCRuntime.h
 include/objc/NSObject.h: runtime/NSObject.h
