@@ -23,5 +23,7 @@ clean:
 
 install:
 	cp libclosure.a $(EMSCRIPTEN)/system/local/lib/
+	cp Block.h $(EMSCRIPTEN)/system/local/include/
+	cp Block_private.h $(EMSCRIPTEN)/system/local/include/
 
 .PHONY: all clean install

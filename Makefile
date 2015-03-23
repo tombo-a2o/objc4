@@ -95,6 +95,8 @@ include/objc/%.h: runtime/%.h
 
 install: $(LIB)
 	cp $(LIB) $(EMSCRIPTEN)/system/local/lib/
+	mkdir -p $(EMSCRIPTEN)/system/local/include/objc
+	cp $(PUBLIC_HEADERS) $(EMSCRIPTEN)/system/local/include/objc/
 
 install-all: install
 	cd lib/libclosure-65 && $(MAKE) install
