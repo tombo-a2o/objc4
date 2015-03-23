@@ -1125,6 +1125,26 @@ static kern_return_t objc_task_threads
 // DEBUG_TASK_THREADS
 #endif
 
+#if TARGET_OS_EMSCRIPTEN
+IMP cache_getImp(Class cls, SEL sel)
+{
+  cache_t &cache = cls->cache;
+  mask_t mask = cache._mask;
+  struct bucket_t *bucket = cache._buckets;
+  uintptr_t index = ((uintptr_t)sel) & mask;
+  uintptr_t key;
+  for(bucket += index; (key = bucket->key()) != 0; bucket++) {
+    if(key == (uintptr_t)sel) {
+      return bucket->imp();
+    } else if(key == 1) {
+      // cache wrap
+      bucket = (struct bucket_t *)(bucket->imp());
+    }
+  }
+  return NULL;
+}
+#endif
+
 
 // __OBJC2__
 #endif
