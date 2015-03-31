@@ -14,5 +14,11 @@ all:	minimum.js
 minimum.js:	minimum.m
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $<
 
+minimum_debug.js:	minimum.m
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $< --pre-js init.js
+
 minimum.ll:	minimum.m
 	$(CC) -emit-llvm -S -o $@ $(CLANG_OPTS) $(INCLUDE) $<
+
+minimum: minimum.m
+	clang -framework Foundation -o $@ $<

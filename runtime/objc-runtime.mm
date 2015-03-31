@@ -225,19 +225,20 @@ void removeHeader(header_info *hi)
 **********************************************************************/
 void environ_init(void)
 {
-#if !TARGET_OS_EMSCRIPTEN
+    /*
     if (issetugid()) {
         // All environment variables are silently ignored when setuid or setgid
         // This includes OBJC_HELP and OBJC_PRINT_OPTIONS themselves.
         return;
     }
+    */
 
     bool PrintHelp = false;
     bool PrintOptions = false;
 
     // Scan environ[] directly instead of calling getenv() a lot.
     // This optimizes the case where none are set.
-    for (char **p = *_NSGetEnviron(); *p != nil; p++) {
+    for (char **p = environ; *p != nil; p++) {
         if (0 != strncmp(*p, "OBJC_", 5)) continue;
 
         if (0 == strncmp(*p, "OBJC_HELP=", 10)) {
@@ -284,7 +285,6 @@ void environ_init(void)
             if (PrintOptions && *opt->var) _objc_inform("%s is set", opt->env);
         }
     }
-#endif
 }
 
 
