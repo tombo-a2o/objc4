@@ -111,7 +111,7 @@ my $crashcatch = <<'END';
 // from dyld-interposing.h
 #define DYLD_INTERPOSE(_replacement,_replacee) __attribute__((used)) static struct{ const void* replacement; const void* replacee; } _interpose_##_replacee __attribute__ ((section ("__DATA,__interpose"))) = { (const void*)(unsigned long)&_replacement, (const void*)(unsigned long)&_replacee };
 
-static void catchcrash(int sig) 
+static void catchcrash(int sig)
 {
     const char *msg;
     switch (sig) {
@@ -128,7 +128,7 @@ static void catchcrash(int sig)
 }
 
 static void setupcrash(void) __attribute__((constructor));
-static void setupcrash(void) 
+static void setupcrash(void)
 {
     signal(SIGILL, &catchcrash);
     signal(SIGBUS, &catchcrash);
@@ -160,26 +160,26 @@ END
 
 # map language to buildable extensions for that language
 my %extensions_for_language = (
-    "c"     => ["c"],     
-    "objective-c" => ["c", "m"], 
-    "c++" => ["c", "cc", "cp", "cpp", "cxx", "c++"], 
-    "objective-c++" => ["c", "m", "cc", "cp", "cpp", "cxx", "c++", "mm"], 
-    "swift" => ["swift"], 
+    "c"     => ["c"],
+    "objective-c" => ["c", "m"],
+    "c++" => ["c", "cc", "cp", "cpp", "cxx", "c++"],
+    "objective-c++" => ["c", "m", "cc", "cp", "cpp", "cxx", "c++", "mm"],
+    "swift" => ["swift"],
 
-    "any" => ["c", "m", "cc", "cp", "cpp", "cxx", "c++", "mm", "swift"], 
+    "any" => ["c", "m", "cc", "cp", "cpp", "cxx", "c++", "mm", "swift"],
     );
 
 # map extension to languages
 my %languages_for_extension = (
-    "c" => ["c", "objective-c", "c++", "objective-c++"], 
-    "m" => ["objective-c", "objective-c++"], 
-    "mm" => ["objective-c++"], 
-    "cc" => ["c++", "objective-c++"], 
-    "cp" => ["c++", "objective-c++"], 
-    "cpp" => ["c++", "objective-c++"], 
-    "cxx" => ["c++", "objective-c++"], 
-    "c++" => ["c++", "objective-c++"], 
-    "swift" => ["swift"], 
+    "c" => ["c", "objective-c", "c++", "objective-c++"],
+    "m" => ["objective-c", "objective-c++"],
+    "mm" => ["objective-c++"],
+    "cc" => ["c++", "objective-c++"],
+    "cp" => ["c++", "objective-c++"],
+    "cpp" => ["c++", "objective-c++"],
+    "cxx" => ["c++", "objective-c++"],
+    "c++" => ["c++", "objective-c++"],
+    "swift" => ["swift"],
     );
 
 # Run some newline-separated commands like `make` would, stopping if any fail
@@ -315,7 +315,7 @@ sub systemsdkname {
         ($name) = ($line =~ /^ProductName:\s+(.*)/)  if !$name;
         ($vers) = ($line =~ /^ProductVersion:\s+(.*)/)  if !$vers;
     }
-    
+
     $name =~ s/ //g;
     $name = lc($name);
     my $internal = "";
@@ -336,7 +336,7 @@ sub check_output {
 
     my %T = %{$C{"TEST_$name"}};
 
-    # Quietly strip MallocScribble before saving the "original" output 
+    # Quietly strip MallocScribble before saving the "original" output
     # because it is distracting.
     filter_malloc(\@output);
 
@@ -357,14 +357,14 @@ sub check_output {
 
     # OK line should be the only one left
     $bad = "(output not 'OK: $name')" if ($bad eq ""  &&  (scalar(@output) != 1  ||  $output[0] !~ /^OK: $name/));
-    
+
     if ($bad ne "") {
         print "${red}FAIL: /// test '$name' \\\\\\$def\n";
         colorprint($red, @original_output);
         print "${red}FAIL: \\\\\\ test '$name' ///$def\n";
         print "${red}FAIL: $name: $bad$def\n";
         $xit = 0;
-    } 
+    }
     elsif ($warn ne "") {
         print "${yellow}PASS: /// test '$name' \\\\\\$def\n";
         colorprint($yellow, @original_output);
@@ -520,9 +520,9 @@ sub filter_malloc
     for my $line (@$outputref) {
         # Ignore MallocScribble prologue.
         # Ignore MallocStackLogging prologue.
-        if ($line =~ /malloc: enabling scribbling to detect mods to free/  ||  
+        if ($line =~ /malloc: enabling scribbling to detect mods to free/  ||
             $line =~ /Deleted objects will be dirtied by the collector/  ||
-            $line =~ /malloc: stack logs being written into/  ||  
+            $line =~ /malloc: stack logs being written into/  ||
             $line =~ /malloc: recording malloc and VM allocation stacks/)
         {
             next;
@@ -618,7 +618,7 @@ sub gather_simple {
     # TEST_RUN_OUTPUT expected run stdout/stderr
     open(my $in, "< $file") || die;
     my $contents = join "", <$in>;
-    
+
     my $test_h = ($contents =~ /^\s*#\s*(include|import)\s*"test\.h"/m);
     my $disabled = ($contents =~ /\bTEST_DISABLED\b/m);
     my $crashes = ($contents =~ /\bTEST_CRASHES\b/m);
@@ -657,7 +657,7 @@ sub gather_simple {
         next if !defined($testvalue);
         # testvalue is the configuration being run now
         # condvalues are the allowed values for this test
-        
+
         my $ok = 0;
         for my $condvalue (@condvalues) {
 
@@ -691,13 +691,13 @@ sub gather_simple {
 
     # save some results for build and run phases
     $$CREF{"TEST_$name"} = {
-        TEST_BUILD => $buildcmd, 
-        TEST_BUILD_OUTPUT => $builderror, 
-        TEST_CRASHES => $crashes, 
-        TEST_RUN_OUTPUT => $runerror, 
+        TEST_BUILD => $buildcmd,
+        TEST_BUILD_OUTPUT => $builderror,
+        TEST_CRASHES => $crashes,
+        TEST_RUN_OUTPUT => $runerror,
         TEST_CFLAGS => $cflags,
         TEST_ENV => $envstring,
-        TEST_RUN => $run, 
+        TEST_RUN => $run,
     };
 
     return 1;
@@ -734,27 +734,27 @@ sub build_simple {
         } else {
             print "${red}FAIL: /// test '$name' \\\\\\$def\n";
             colorprint $red, $output;
-            print "${red}FAIL: \\\\\\ test '$name' ///$def\n";                
+            print "${red}FAIL: \\\\\\ test '$name' ///$def\n";
             print "${red}FAIL: $name (build output does not match TEST_BUILD_OUTPUT)$def\n";
             $ok = 0;
         }
     } elsif ($?) {
         print "${red}FAIL: /// test '$name' \\\\\\$def\n";
         colorprint $red, $output;
-        print "${red}FAIL: \\\\\\ test '$name' ///$def\n";                
+        print "${red}FAIL: \\\\\\ test '$name' ///$def\n";
         print "${red}FAIL: $name (build failed)$def\n";
         $ok = 0;
     } elsif ($output ne "") {
         print "${red}FAIL: /// test '$name' \\\\\\$def\n";
         colorprint $red, $output;
-        print "${red}FAIL: \\\\\\ test '$name' ///$def\n";                
+        print "${red}FAIL: \\\\\\ test '$name' ///$def\n";
         print "${red}FAIL: $name (unexpected build output)$def\n";
         $ok = 0;
     } else {
         $ok = 1;
     }
 
-    
+
     if ($ok) {
         foreach my $file (glob("*.out *.dylib *.bundle")) {
             make("dsymutil $file");
@@ -821,7 +821,7 @@ sub find_compiler {
     my $key = $cc . ':' . $sdk;
     my $result = $compiler_memo{$key};
     return $result if defined $result;
-    
+
     $result  = `xcrun -sdk $sdk -find $cc 2>/dev/null`;
 
     chomp $result;
@@ -837,7 +837,7 @@ sub make_one_config {
     # Aliases
     $C{LANGUAGE} = "objective-c"  if $C{LANGUAGE} eq "objc";
     $C{LANGUAGE} = "objective-c++"  if $C{LANGUAGE} eq "objc++";
-    
+
     # Look up SDK
     # Try exact match first.
     # Then try lexically-last prefix match (so "macosx" => "macosx10.7internal").
@@ -861,7 +861,7 @@ sub make_one_config {
         die "unknown SDK '$C{SDK}'\nInstalled SDKs: @sdks\n";
     }
 
-    # set the config name now, after massaging the language and sdk, 
+    # set the config name now, after massaging the language and sdk,
     # but before adding other settings
     my $configname = config_name(%C);
     die if ($configname =~ /'/);
@@ -873,14 +873,14 @@ sub make_one_config {
     ($C{SDK_PATH}) = (`xcodebuild -version -sdk $C{SDK} Path` =~ /^\s*(.+?)\s*$/);
 
     # Look up test library (possible in root or SDK_PATH)
-    
+
     my $rootarg = $root;
     my $symroot;
-    my @sympaths = ( (glob "$root/*~sym")[0], 
-                     (glob "$root/BuildRecords/*_install/Symbols")[0], 
+    my @sympaths = ( (glob "$root/*~sym")[0],
+                     (glob "$root/BuildRecords/*_install/Symbols")[0],
                      "$root/Symbols" );
-    my @dstpaths = ( (glob "$root/*~dst")[0], 
-                     (glob "$root/BuildRecords/*_install/Root")[0], 
+    my @dstpaths = ( (glob "$root/*~dst")[0],
+                     (glob "$root/BuildRecords/*_install/Root")[0],
                      "$root/Root" );
     for(my $i = 0; $i < scalar(@sympaths); $i++) {
         if (-e $sympaths[$i]  &&  -e $dstpaths[$i]) {
@@ -929,19 +929,19 @@ sub make_one_config {
         die "No compiler '$cc' ('$C{CC}') in SDK '$C{SDK}'\n" if !-e $C{CC};
         die "No compiler '$cxx' ('$C{CXX}') in SDK '$C{SDK}'\n" if !-e $C{CXX};
         die "No compiler '$swift' ('$C{SWIFT}') in SDK '$C{SDK}'\n" if !-e $C{SWIFT};
-    }    
-    
+    }
+
     # Populate cflags
 
     # save-temps so dsymutil works so debug info works
     my $cflags = "-I$DIR -W -Wall -Wno-deprecated-declarations -Wshorten-64-to-32 -g -save-temps -Os -arch $C{ARCH} ";
     my $objcflags = "";
     my $swiftflags = "-g ";
-    
+
     $cflags .= " -isysroot '$C{SDK_PATH}'";
     $cflags .= " '-Wl,-syslibroot,$C{SDK_PATH}'";
     $swiftflags .= " -sdk '$C{SDK_PATH}'";
-    
+
     my $target = "";
     if ($C{SDK} =~ /^iphoneos[0-9]/  &&  $cflags !~ /-mios-version-min/) {
         my ($vers) = ($C{SDK} =~ /^iphoneos([0-9]+\.[0-9]+)/);
@@ -963,13 +963,13 @@ sub make_one_config {
     if ($C{SDK} =~ /^iphonesimulator/  &&  $C{ARCH} eq "i386") {
         $objcflags .= " -fobjc-abi-version=2 -fobjc-legacy-dispatch";
     }
-    
+
     if ($root ne "") {
         my $library_path = dirname($C{TESTLIB});
         $cflags .= " -L$library_path";
         $cflags .= " -I '$root/usr/include'";
         $cflags .= " -I '$root/usr/local/include'";
-        
+
         if ($C{SDK_PATH} ne "/") {
             $cflags .= " -I '$root$C{SDK_PATH}/usr/include'";
             $cflags .= " -I '$root$C{SDK_PATH}/usr/local/include'";
@@ -982,9 +982,9 @@ sub make_one_config {
         $cflags .= " -Wl,-segalign,0x4000 ";
     }
 
-    
+
     # Populate objcflags
-    
+
     $objcflags .= " -lobjc";
     if ($C{MEM} eq "gc") {
         $objcflags .= " -fobjc-gc";
@@ -1003,7 +1003,7 @@ sub make_one_config {
         # do this even for non-GC tests
         $objcflags .= " -lauto";
     }
-    
+
     # Populate ENV_PREFIX
     $C{ENV} = "LANG=C MallocScribble=1";
     $C{ENV} .= " VERBOSE=1"  if $VERBOSE;
@@ -1022,10 +1022,10 @@ sub make_one_config {
     }
     if ($C{SDK} =~ /^iphonesimulator[0-9]/) {
         my ($vers) = ($C{SDK} =~ /^iphonesimulator([0-9]+\.[0-9+])/);
-        $C{ENV} .= 
-            " CFFIXED_USER_HOME=$ENV{HOME}/Library/Application\\ Support/iPhone\\ Simulator/$vers" . 
+        $C{ENV} .=
+            " CFFIXED_USER_HOME=$ENV{HOME}/Library/Application\\ Support/iPhone\\ Simulator/$vers" .
             " IPHONE_SIMULATOR_ROOT=$C{SDK_PATH}" .
-            " IPHONE_SHARED_RESOURCES_DIRECTORY=$ENV{HOME}/Library/Application\\ Support/iPhone\\ Simulator/$vers";        
+            " IPHONE_SHARED_RESOURCES_DIRECTORY=$ENV{HOME}/Library/Application\\ Support/iPhone\\ Simulator/$vers";
     }
 
     # Populate compiler commands
@@ -1034,7 +1034,7 @@ sub make_one_config {
     $C{COMPILE_M}   = "env LANG=C '$C{CC}'  $cflags $objcflags -x objective-c -std=gnu99";
     $C{COMPILE_MM}  = "env LANG=C '$C{CXX}' $cflags $objcflags -x objective-c++";
     $C{COMPILE_SWIFT} = "env LANG=C '$C{SWIFT}' $swiftflags";
-    
+
     $C{COMPILE} = $C{COMPILE_C}      if $C{LANGUAGE} eq "c";
     $C{COMPILE} = $C{COMPILE_CXX}    if $C{LANGUAGE} eq "c++";
     $C{COMPILE} = $C{COMPILE_M}      if $C{LANGUAGE} eq "objective-c";
@@ -1074,7 +1074,7 @@ sub make_one_config {
         return 0;
     }
 
-    # fixme 
+    # fixme
     if ($C{LANGUAGE} eq "swift"  &&  $C{ARCH} =~ /^arm/) {
         print "note: skipping configuration $C{NAME}\n";
         print "note:   because ARCH=$C{ARCH} does not support LANGAUGE=SWIFT\n";
@@ -1082,7 +1082,7 @@ sub make_one_config {
     }
 
     %$configref = %C;
-}    
+}
 
 sub make_configs {
     my ($root, %args) = @_;
@@ -1159,7 +1159,7 @@ sub run_one_config {
                 print "\nBUILD $test\n";
             }
             mkdir "$configdir/$test.build"  || die;
-            
+
             if ($ALL_TESTS{$test}) {
                 $testcount++;
                 if (!build_simple(\%C, $test)) {
@@ -1172,7 +1172,7 @@ sub run_one_config {
             }
         }
     }
-    
+
     if (!$RUN  ||  !scalar(@builttests)) {
         # nothing to do
     }
@@ -1192,7 +1192,7 @@ sub run_one_config {
 
         foreach my $test (@builttests) {
             print "\nRUN $test\n"  if ($VERBOSE);
-            
+
             if ($ALL_TESTS{$test})
             {
                 if (!run_simple(\%C, $test)) {
@@ -1203,7 +1203,7 @@ sub run_one_config {
             }
         }
     }
-    
+
     return ($testcount, $failcount);
 }
 
@@ -1222,7 +1222,7 @@ sub getargs {
     return [split ',', $default];
 }
 
-# Return 1 or 0 if set by "$argname=1" or "$argname=0" on the 
+# Return 1 or 0 if set by "$argname=1" or "$argname=0" on the
 # command line. Return $default if not set.
 sub getbools {
     my ($argname, $default) = @_;
