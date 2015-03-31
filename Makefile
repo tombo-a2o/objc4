@@ -74,7 +74,9 @@ CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -I./lib/libclosur
 all: $(LIB) libclosure
 
 $(LIB): $(HEADERS) $(OBJS)
-	$(LINK) rcs $@ $(OBJS)
+	llvm-link -o libobjc4.bc $(OBJS)
+	rm -f $@
+	$(LINK) rcs $@ libobjc4.bc
 
 libclosure:
 	cd lib/libclosure-65 && $(MAKE)
