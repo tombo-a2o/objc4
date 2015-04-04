@@ -82,7 +82,7 @@ my %ALL_TESTS;
 # variable         # example value
 
 # things you can multiplex on the command line
-# ARCH=i386,x86_64,armv6,armv7
+# ARCH=i386,x86_64,armv6,armv7,js
 # SDK=macosx,iphoneos,iphonesimulator
 # LANGUAGE=c,c++,objective-c,objective-c++,swift
 # CC=clang,gcc-4.2,llvm-gcc-4.2
@@ -800,6 +800,12 @@ sub run_simple {
         my $cmd = "ssh iphone 'cd $remotedir && env $env $remotedyld ./$name.out'";
         $output = make("$cmd");
     }
+    elsif ($C{ARCH} eq "js") {
+        my $cmd = "env $env node ./$name.out";
+        $output = make("sh -c '$cmd 2>&1' 2>&1");
+        # need extra sh level to capture "sh: Illegal instruction" after crash
+        # fixme fail if $? except tests that expect to crash
+    }
     else {
         # run locally
 
@@ -815,6 +821,7 @@ sub run_simple {
 
 my %compiler_memo;
 sub find_compiler {
+    my %C = %{shift()};
     my ($cc, $sdk, $sdk_path) = @_;
 
     # memoize
@@ -822,7 +829,11 @@ sub find_compiler {
     my $result = $compiler_memo{$key};
     return $result if defined $result;
 
-    $result  = `xcrun -sdk $sdk -find $cc 2>/dev/null`;
+    if ($C{ARCH} eq "js") {
+        $result = `which emcc`;
+    } else {
+        $result = `xcrun -sdk $sdk -find $cc 2>/dev/null`;
+    }
 
     chomp $result;
     $compiler_memo{$key} = $result;
@@ -922,9 +933,9 @@ sub make_one_config {
         $C{CXX} = $cxx;
         $C{SWIFT} = $swift
     } else {
-        $C{CC} = find_compiler($cc, $C{SDK}, $C{SDK_PATH});
-        $C{CXX} = find_compiler($cxx, $C{SDK}, $C{SDK_PATH});
-        $C{SWIFT} = find_compiler($swift, $C{SDK}, $C{SDK_PATH});
+        $C{CC} = find_compiler(\%C, $cc, $C{SDK}, $C{SDK_PATH});
+        $C{CXX} = find_compiler(\%C, $cxx, $C{SDK}, $C{SDK_PATH});
+        $C{SWIFT} = find_compiler(\%C, $swift, $C{SDK}, $C{SDK_PATH});
 
         die "No compiler '$cc' ('$C{CC}') in SDK '$C{SDK}'\n" if !-e $C{CC};
         die "No compiler '$cxx' ('$C{CXX}') in SDK '$C{SDK}'\n" if !-e $C{CXX};
@@ -933,14 +944,22 @@ sub make_one_config {
 
     # Populate cflags
 
-    # save-temps so dsymutil works so debug info works
-    my $cflags = "-I$DIR -W -Wall -Wno-deprecated-declarations -Wshorten-64-to-32 -g -save-temps -Os -arch $C{ARCH} ";
-    my $objcflags = "";
-    my $swiftflags = "-g ";
+    my ($cflags, $objcflags, $swiftflags);
+    if ($C{ARCH} eq "js") {
+        $cflags = "-I../include -fblocks -fobjc-runtime=macosx -s ASSERTIONS=0 -s DEMANGLE_SUPPORT=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 ";
+        $objcflags = "$DIR/../libobjc4.a $DIR/../lib/libclosure-65/libclosure.a ";
+        $swiftflags = "-g ";
+    }
+    else {
+        # save-temps so dsymutil works so debug info works
+        $cflags = "-I$DIR -W -Wall -Wno-deprecated-declarations -Wshorten-64-to-32 -g -save-temps -Os -arch $C{ARCH} ";
+        $objcflags = "";
+        $swiftflags = "-g ";
 
-    $cflags .= " -isysroot '$C{SDK_PATH}'";
-    $cflags .= " '-Wl,-syslibroot,$C{SDK_PATH}'";
-    $swiftflags .= " -sdk '$C{SDK_PATH}'";
+        $cflags .= " -isysroot '$C{SDK_PATH}'";
+        $cflags .= " '-Wl,-syslibroot,$C{SDK_PATH}'";
+        $swiftflags .= " -sdk '$C{SDK_PATH}'";
+    }
 
     my $target = "";
     if ($C{SDK} =~ /^iphoneos[0-9]/  &&  $cflags !~ /-mios-version-min/) {
@@ -985,23 +1004,25 @@ sub make_one_config {
 
     # Populate objcflags
 
-    $objcflags .= " -lobjc";
-    if ($C{MEM} eq "gc") {
-        $objcflags .= " -fobjc-gc";
-    }
-    elsif ($C{MEM} eq "arc") {
-        $objcflags .= " -fobjc-arc";
-    }
-    elsif ($C{MEM} eq "mrc") {
-        # nothing
-    }
-    else {
-        die "unrecognized MEM '$C{MEM}'\n";
-    }
+    if ($C{ARCH} ne "js") {
+        $objcflags .= " -lobjc";
+        if ($C{MEM} eq "gc") {
+            $objcflags .= " -fobjc-gc";
+        }
+        elsif ($C{MEM} eq "arc") {
+            $objcflags .= " -fobjc-arc";
+        }
+        elsif ($C{MEM} eq "mrc") {
+            # nothing
+        }
+        else {
+            die "unrecognized MEM '$C{MEM}'\n";
+        }
 
-    if (supportslibauto($C{SDK})) {
-        # do this even for non-GC tests
-        $objcflags .= " -lauto";
+        if (supportslibauto($C{SDK})) {
+            # do this even for non-GC tests
+            $objcflags .= " -lauto";
+        }
     }
 
     # Populate ENV_PREFIX
@@ -1250,7 +1271,7 @@ sub getbool {
 my %args;
 
 
-my $default_arch = (`/usr/sbin/sysctl hw.optional.x86_64` eq "hw.optional.x86_64: 1\n") ? "x86_64" : "i386";
+my $default_arch = "js";
 $args{ARCH} = getargs("ARCH", 0);
 $args{ARCH} = getargs("ARCHS", $default_arch)  if !@{$args{ARCH}}[0];
 
