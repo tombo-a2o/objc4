@@ -9,7 +9,7 @@ git clone git@github.com:tomboinc/objc4.git
 cd objc4
 git checkout feature/emscripten
 make
-make install
+make install-all
 
 cd em-test/simple
 make
