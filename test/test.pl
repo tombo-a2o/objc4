@@ -973,7 +973,7 @@ sub make_one_config {
 
     my ($cflags, $objcflags, $swiftflags);
     if ($C{ARCH} eq "js") {
-        $cflags = "-I../include -fblocks -fobjc-runtime=macosx -s ASSERTIONS=0 -s DEMANGLE_SUPPORT=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 ";
+        $cflags = "--valid-abspath $DIR/../include -I $DIR/../include -fblocks -fobjc-runtime=macosx -s ASSERTIONS=0 -s DEMANGLE_SUPPORT=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 ";
         $objcflags = "$DIR/../libobjc4.a $DIR/../lib/libclosure-65/libclosure.a ";
         $swiftflags = "-g ";
     }
