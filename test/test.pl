@@ -336,6 +336,11 @@ sub check_output {
 
     my %T = %{$C{"TEST_$name"}};
 
+    if ($C{ARCH} eq "js") {
+        # node.js emits an extra newline
+        pop @output;
+    }
+
     # Quietly strip MallocScribble before saving the "original" output
     # because it is distracting.
     filter_malloc(\@output);
