@@ -564,6 +564,25 @@ sub filter_guardmalloc
     return $bad;
 }
 
+sub filter_emcc_warning
+{
+    my $outputref = shift;
+    my $warn = "";
+
+    my @new_output;
+    my @lines = split /\n/, $$outputref;
+    for my $line (@lines) {
+        if ($line !~ /^warning: (.*)/) {
+            push @new_output, $line;
+        } else {
+            $warn = "(warned)";
+        }
+    }
+
+    $$outputref = join "\n", @new_output;
+    return $warn;
+}
+
 # TEST_SOMETHING
 # text
 # text
@@ -723,6 +742,8 @@ sub build_simple {
     my $cmd = $T{TEST_BUILD} ? eval "return \"$T{TEST_BUILD}\"" : "$C{COMPILE}   $T{TEST_CFLAGS} $file -o $name.$out_ext";
 
     my $output = make($cmd);
+
+    filter_emcc_warning(\$output);
 
     # rdar://10163155
     $output =~ s/ld: warning: could not create compact unwind for [^\n]+: does not use standard frame\n//g;
