@@ -862,7 +862,7 @@ sub make_one_config {
         my $SDK = $C{SDK};
         $exactsdk = $sdk  if ($sdk eq $SDK);
         # check for digits to prevent e.g. "iphone" => "iphonesimulator4.2"
-        $prefixsdk = $sdk  if ($sdk =~ /^$SDK[0-9]/  &&  $sdk gt $prefixsdk);
+        $prefixsdk = $sdk  if ($sdk =~ /^$SDK[0-9]+/  &&  $sdk >= $prefixsdk);
     }
     if ($exactsdk) {
         $C{SDK} = $exactsdk;
