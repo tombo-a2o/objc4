@@ -719,7 +719,8 @@ sub build_simple {
         die "$?" if $?;
     }
 
-    my $cmd = $T{TEST_BUILD} ? eval "return \"$T{TEST_BUILD}\"" : "$C{COMPILE}   $T{TEST_CFLAGS} $file -o $name.out";
+    my $out_ext = $C{ARCH} ne "js" ? "out" : "js";
+    my $cmd = $T{TEST_BUILD} ? eval "return \"$T{TEST_BUILD}\"" : "$C{COMPILE}   $T{TEST_CFLAGS} $file -o $name.$out_ext";
 
     my $output = make($cmd);
 
@@ -801,7 +802,7 @@ sub run_simple {
         $output = make("$cmd");
     }
     elsif ($C{ARCH} eq "js") {
-        my $cmd = "env $env node ./$name.out";
+        my $cmd = "env $env node ./$name.js";
         $output = make("sh -c '$cmd 2>&1' 2>&1");
         # need extra sh level to capture "sh: Illegal instruction" after crash
         # fixme fail if $? except tests that expect to crash
