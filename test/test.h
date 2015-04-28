@@ -207,6 +207,10 @@ inline void operator delete[](void*, const std::nothrow_t&) throw() { fail("call
 #endif
 
 
+#if TARGET_OS_EMSCRIPTEN
+#warning leak checker not yet supported
+#else
+
 /* Leak checking
    Fails if total malloc memory in use at leak_check(n) 
    is more than n bytes above that at leak_mark().
@@ -297,6 +301,8 @@ static inline bool is_guardmalloc(void)
     const char *env = getenv("GUARDMALLOC");
     return (env  &&  0 == strcmp(env, "YES"));
 }
+
+#endif
 
 
 /* Memory management compatibility macros */
