@@ -14,9 +14,9 @@
 #include <pthread.h>
 #include <sys/param.h>
 #include <malloc/malloc.h>
-#include <mach/mach.h>
-#include <mach/vm_param.h>
-#include <mach/mach_time.h>
+/* #include <mach/mach.h> */
+/* #include <mach/vm_param.h> */
+/* #include <mach/mach_time.h> */
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <objc/message.h>
