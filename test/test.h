@@ -17,6 +17,16 @@
 /* #include <mach/mach.h> */
 /* #include <mach/vm_param.h> */
 /* #include <mach/mach_time.h> */
+
+#define __unused __attribute__((unused))
+#ifdef __cplusplus
+#define __BEGIN_DECLS extern "C" {
+#define __END_DECLS }
+#else
+#define __BEGIN_DECLS
+#define __END_DECLS
+#endif
+
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <objc/message.h>
