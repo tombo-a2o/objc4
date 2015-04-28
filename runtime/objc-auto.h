@@ -47,6 +47,7 @@
 #   undef BOOL
 #elif TARGET_OS_EMSCRIPTEN
 #warning "not implemented yet"
+#include <libkern/OSAtomic.h>
 #else
 #error "unkonwo"
 #endif
