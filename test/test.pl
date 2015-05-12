@@ -577,7 +577,7 @@ sub filter_emcc_warning
     my @new_output;
     my @lines = split /\n/, $$outputref;
     for my $line (@lines) {
-        if ($line !~ /^warning: (.*)/) {
+        if ($line !~ /^.*warning:.*/) {
             push @new_output, $line;
         } else {
             $warn = "(warned)";
