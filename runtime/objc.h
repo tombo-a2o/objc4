@@ -32,8 +32,21 @@
 #include <Availability.h>
 #include <objc/objc-api.h>
 #include <stdbool.h>
+
 #ifdef EMSCRIPTEN
-	#include <emscripten.h>
+
+#include <emscripten.h>
+
+/// FIXME: I think we should move these macros to somewhere system headers are.
+#define __unused __attribute__((unused))
+#ifdef __cplusplus
+#define __BEGIN_DECLS extern "C" {
+#define __END_DECLS }
+#else
+#define __BEGIN_DECLS
+#define __END_DECLS
+#endif
+
 #endif
 
 #if !OBJC_TYPES_DEFINED
