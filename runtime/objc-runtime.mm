@@ -45,7 +45,7 @@ OBJC_EXPORT Class getOriginalClassForPosingClass(Class);
 **********************************************************************/
 
 // Settings from environment variables
-#define OPTION(var, env, help) bool var = false;
+#define OPTION(var, env, help) bool var = true;
 #include "objc-env.h"
 #undef OPTION
 
@@ -303,7 +303,7 @@ logReplacedMethod(const char *className, SEL s,
     // Silently ignore +load replacement because category +load is special
     if (s == SEL_load) return;
 
-#if TARGET_OS_WIN32
+#if TARGET_OS_WIN32 || TARGET_OS_EMSCRIPTEN
     // don't know dladdr()/dli_fname equivalent
 #else
     Dl_info dl;
