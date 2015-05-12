@@ -45,7 +45,7 @@ OBJC_EXPORT Class getOriginalClassForPosingClass(Class);
 **********************************************************************/
 
 // Settings from environment variables
-#define OPTION(var, env, help) bool var = true;
+#define OPTION(var, env, help) bool var = false;
 #include "objc-env.h"
 #undef OPTION
 
