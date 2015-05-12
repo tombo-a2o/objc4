@@ -946,8 +946,6 @@ extern int secure_open(const char *filename, int flags, uid_t euid);
 
 #   define SUPPORT_DIRECT_THREAD_KEYS 0
 
-#include <malloc/malloc.h>
-
 // OSAtomic
 
 #include <libkern/OSAtomic.h>
