@@ -946,51 +946,9 @@ extern int secure_open(const char *filename, int flags, uid_t euid);
 
 #   define SUPPORT_DIRECT_THREAD_KEYS 0
 
-
 // OSAtomic
 
-static __inline BOOL OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
-{
-  // fixme barrier is overkill
-  return __sync_bool_compare_and_swap(dst, oldl, newl);
-}
-
-static __inline BOOL OSAtomicCompareAndSwapPtr(void *oldp, void *newp, void * volatile *dst)
-{
-  // really??????
-  return __sync_bool_compare_and_swap(dst, oldp, newp);
-}
-
-static __inline BOOL OSAtomicCompareAndSwapPtrBarrier(void *oldp, void *newp, void * volatile *dst)
-{
-  return __sync_bool_compare_and_swap(dst, oldp, newp);
-}
-
-static __inline BOOL OSAtomicCompareAndSwap32Barrier(int32_t oldl, int32_t newl, int32_t volatile *dst)
-{
-  return __sync_bool_compare_and_swap(dst, oldl, newl);
-}
-
-static __inline int32_t OSAtomicDecrement32Barrier(volatile int32_t *dst)
-{
-  return __sync_fetch_and_sub(dst, 1);
-}
-
-static __inline int32_t OSAtomicIncrement32Barrier(volatile int32_t *dst)
-{
-  return __sync_fetch_and_add(dst, 1);
-}
-
-static __inline int32_t OSAtomicOr32Barrier(uint32_t theMask, volatile uint32_t *theValue)
-{
-  return __sync_fetch_and_or(theValue, theMask);
-}
-
-static __inline int32_t OSAtomicXor32Barrier(uint32_t theMask, volatile uint32_t *theValue)
-{
-  return __sync_fetch_and_xor(theValue, theMask);
-}
-
+#include <libkern/OSAtomic.h>
 
 
 

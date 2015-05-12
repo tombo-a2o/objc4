@@ -4,6 +4,7 @@
 
 #include "test.h"
 #include <dlfcn.h>
+#include <libkern/OSAtomic.h>
 #include <objc/objc-internal.h>
 
 int TestRootLoad = 0;

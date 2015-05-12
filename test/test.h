@@ -14,9 +14,19 @@
 #include <pthread.h>
 #include <sys/param.h>
 #include <malloc/malloc.h>
-#include <mach/mach.h>
-#include <mach/vm_param.h>
-#include <mach/mach_time.h>
+/* #include <mach/mach.h> */
+/* #include <mach/vm_param.h> */
+/* #include <mach/mach_time.h> */
+
+#define __unused __attribute__((unused))
+#ifdef __cplusplus
+#define __BEGIN_DECLS extern "C" {
+#define __END_DECLS }
+#else
+#define __BEGIN_DECLS
+#define __END_DECLS
+#endif
+
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <objc/message.h>
@@ -207,6 +217,10 @@ inline void operator delete[](void*, const std::nothrow_t&) throw() { fail("call
 #endif
 
 
+#if TARGET_OS_EMSCRIPTEN
+#warning leak checker not yet supported
+#else
+
 /* Leak checking
    Fails if total malloc memory in use at leak_check(n) 
    is more than n bytes above that at leak_mark().
@@ -297,6 +311,8 @@ static inline bool is_guardmalloc(void)
     const char *env = getenv("GUARDMALLOC");
     return (env  &&  0 == strcmp(env, "YES"));
 }
+
+#endif
 
 
 /* Memory management compatibility macros */
