@@ -2585,7 +2585,7 @@ Class readClass(Class cls, bool headerIsBundle, bool headerInSharedCache)
     // does not bind shared cache absolute symbols as expected.
     // This (and the __ARCLite__ hack below) can be removed
     // once the simulator drops 10.8 support.
-#if TARGET_IPHONE_SIMULATOR
+#if TARGET_IPHONE_SIMULATOR || TARGET_OS_EMSCRIPTEN
     if (cls->cache._mask) cls->cache._mask = 0;
     if (cls->cache._occupied) cls->cache._occupied = 0;
     if (cls->ISA()->cache._mask) cls->ISA()->cache._mask = 0;
