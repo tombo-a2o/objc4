@@ -740,13 +740,6 @@ sub build_simple {
         $ok = 1;
     }
 
-
-    if ($ok) {
-        foreach my $file (glob("*.out *.dylib *.bundle")) {
-            make("dsymutil $file");
-        }
-    }
-
     return $ok;
 }
 
