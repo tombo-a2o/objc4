@@ -208,7 +208,10 @@ inline void operator delete[](void*, const std::nothrow_t&) throw() { fail("call
 
 
 #if TARGET_OS_EMSCRIPTEN
-#warning leak checker not yet supported
+
+static inline void leak_mark(void) {}
+#define leak_check(n)
+
 #else
 
 /* Leak checking
