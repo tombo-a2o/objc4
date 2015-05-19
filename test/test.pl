@@ -538,7 +538,8 @@ sub filter_emcc_framework
     my @new_output;
     my @lines = split /\n/, $$outputref;
     for my $line (@lines) {
-        if ($line !~ m{/.*frameworks/CoreFoundation.framework/CoreFoundation}) {
+        if ($line !~ m{/.*frameworks/CoreFoundation\.framework/CoreFoundation} &&
+            $line !~ m{/.*frameworks/Foundation\.framework/Foundation}) {
             push @new_output, $line;
         }
     }
