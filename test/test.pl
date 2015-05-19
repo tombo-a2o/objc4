@@ -1305,7 +1305,7 @@ $args{ARCH} = getargs("ARCHS", $default_arch)  if !@{$args{ARCH}}[0];
 $args{SDK} = getargs("SDK", "macosx");
 
 $args{MEM} = getargs("MEM", "mrc");
-$args{LANGUAGE} = [ map { lc($_) } @{getargs("LANGUAGE", "objective-c,swift")} ];
+$args{LANGUAGE} = [ map { lc($_) } @{getargs("LANGUAGE", "objective-c")} ];
 $args{STDLIB} = getargs("STDLIB", "libstdc++");
 
 $args{CC} = getargs("CC", "clang");
