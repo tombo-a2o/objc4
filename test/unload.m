@@ -1,3 +1,4 @@
+// TEST_CONFIG SDK=macosx,iphoneos
 /*
 TEST_BUILD
     $C{COMPILE}   $DIR/unload4.m -o unload4.dylib -dynamiclib
