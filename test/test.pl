@@ -704,7 +704,14 @@ sub build_simple {
     my $out_ext = "js";
     my $cmd = $T{TEST_BUILD} ? eval "return \"$T{TEST_BUILD}\"" : "$C{COMPILE}   $T{TEST_CFLAGS} $file -o $name.$out_ext";
 
-    my $output = make($cmd);
+    # FIXME: emcc sometimes unexpectedly dies with segv, and this is a monkey patch for that
+    my $output;
+    do {
+        if (defined($output)) {
+            print "retrying the build..";
+        }
+        $output = make($cmd);
+    } until ($output !~ /Stack dump/);
 
     filter_emcc_warning(\$output);
     filter_emcc_note(\$output);
