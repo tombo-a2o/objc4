@@ -1,3 +1,5 @@
+// TEST_CONFIG SDK=macosx,iphoneos
+
 /*
 TEST_BUILD
     $C{COMPILE} $DIR/imageorder1.m -o imageorder1.dylib -dynamiclib

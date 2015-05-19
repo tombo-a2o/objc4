@@ -1,5 +1,5 @@
 // These options must match customrr.m
-// TEST_CONFIG MEM=mrc
+// TEST_CONFIG MEM=mrc SDK=macosx,iphoneos
 /*
 TEST_BUILD
     $C{COMPILE} $DIR/customrr.m -fvisibility=default -o customrr2.out -DTEST_EXCHANGEIMPLEMENTATIONS=1

@@ -1,4 +1,4 @@
-// TEST_CONFIG 
+// TEST_CONFIG SDK=macosx,iphoneos
 
 #include "test.h"
 

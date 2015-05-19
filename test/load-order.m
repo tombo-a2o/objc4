@@ -1,3 +1,5 @@
+// TEST_CONFIG SDK=macosx,iphoneos
+
 /*
 TEST_BUILD
     $C{COMPILE} $DIR/load-order3.m -o load-order3.dylib -dynamiclib

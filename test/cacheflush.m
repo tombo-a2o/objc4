@@ -1,3 +1,5 @@
+// TEST_CONFIG SDK=macosx,iphoneos
+
 /*
 TEST_BUILD
     $C{COMPILE} $DIR/cacheflush0.m -o cacheflush0.dylib -dynamiclib

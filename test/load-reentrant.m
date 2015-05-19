@@ -1,3 +1,5 @@
+// TEST_CONFIG SDK=macosx,iphoneos
+
 /*
 TEST_BUILD
     $C{COMPILE} $DIR/load-reentrant.m -o load-reentrant.out

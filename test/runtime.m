@@ -1,3 +1,5 @@
+// TEST_CONFIG SDK=macosx,iphoneos
+
 /* 
 TEST_RUN_OUTPUT
 objc\[\d+\]: class `SwiftV1Class\' not linked into application

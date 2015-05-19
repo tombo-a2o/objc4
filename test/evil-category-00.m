@@ -1,3 +1,4 @@
+// TEST_CONFIG SDK=macosx,iphoneos
 /*
 rdar://8553305
 

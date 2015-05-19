@@ -1,3 +1,4 @@
+// TEST_CONFIG SDK=macosx,iphoneos
 /*
 TEST_BUILD
     $C{COMPILE} $DIR/future0.m -o future0.dylib -dynamiclib

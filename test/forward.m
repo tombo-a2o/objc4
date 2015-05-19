@@ -1,4 +1,4 @@
-// TEST_CONFIG MEM=mrc,gc
+// TEST_CONFIG MEM=mrc,gc ARCH=x86_64,i386,armv6,armv7
 // TEST_CFLAGS -Wno-deprecated-declarations
 
 #include "test.h"
