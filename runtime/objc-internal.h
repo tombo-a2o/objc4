@@ -41,7 +41,6 @@
 #include <objc/runtime.h>
 #include <Availability.h>
 #include <malloc/malloc.h>
-#warning "we need GCD!"
 //#include <dispatch/dispatch.h>
 
 __BEGIN_DECLS
