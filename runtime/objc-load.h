@@ -31,6 +31,7 @@
 #include <objc/objc-class.h>
 
 //#include <mach-o/loader.h>
+struct mach_header;
 
 /* dynamically loading Mach-O object files that contain Objective-C code */
 
