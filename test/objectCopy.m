@@ -1,4 +1,4 @@
-// TEST_CONFIG MEM=mrc,gc
+// TEST_CONFIG MEM=mrc,gc SDK=macosx,iphoneos
 
 #include "test.h"
 #include <objc/NSObject.h>
