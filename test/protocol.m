@@ -1,4 +1,4 @@
-// TEST_CFLAGS -framework Foundation -Wno-deprecated-declarations
+// TEST_CFLAGS -framework Foundation -framework CoreFoundation -Wno-deprecated-declarations
 // need Foundation to get NSObject compatibility additions for class Protocol
 // because ARC calls [protocol retain]
 

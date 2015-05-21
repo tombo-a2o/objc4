@@ -1,7 +1,7 @@
 /*
 need exception-safe ARC for exception deallocation tests 
 need F/CF for testonthread() in GC mode
-TEST_CFLAGS -fobjc-arc-exceptions -framework Foundation
+TEST_CFLAGS -fobjc-arc-exceptions -framework Foundation -framework CoreFoundation
 
 llvm-gcc unavoidably warns about our deliberately out-of-order handlers
 
