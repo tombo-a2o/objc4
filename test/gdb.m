@@ -12,7 +12,9 @@ int main()
 #else
 
 #include "testroot.i"
+#define __APPLE_API_PRIVATE
 #include <objc/objc-gdb.h>
+#undef __APPLE_API_PRIVATE
 #include <objc/runtime.h>
 
 int main()

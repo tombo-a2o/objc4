@@ -2,7 +2,9 @@
 
 #include "test.h"
 #include <objc/objc-runtime.h>
+#define __APPLE_API_PRIVATE
 #include <objc/objc-gdb.h>
+#undef __APPLE_API_PRIVATE
 #import <Foundation/NSObject.h>
 
 @interface Foo:NSObject

@@ -3,7 +3,9 @@
 #include "test.h"
 #include <objc/runtime.h>
 #include <objc/objc-internal.h>
+#define __APPLE_API_PRIVATE
 #include <objc/objc-gdb.h>
+#undef __APPLE_API_PRIVATE
 #include <dlfcn.h>
 #import <Foundation/NSObject.h>
 
