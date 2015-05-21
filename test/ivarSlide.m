@@ -1,3 +1,4 @@
+// TEST_CONFIG SDK=macosx,iphoneos
 /*
 TEST_BUILD
     $C{COMPILE} $DIR/ivarSlide1.m $DIR/ivarSlide.m -o ivarSlide.out
