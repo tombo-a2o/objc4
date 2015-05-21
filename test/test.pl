@@ -664,6 +664,9 @@ sub gather_simple {
             last if $ok;
         }
 
+        # emscripten does not support signals for now
+        $ok = 0 if $crashes;
+
         if (!$ok) {
             my $plural = (@condvalues > 1) ? "one of: " : "";
             print "SKIP: $name    ($condkey=$testvalue, but test requires $plural", join(' ', @condvalues), ")\n";
@@ -696,9 +699,7 @@ sub build_simple {
     my $file = "$DIR/$name.$ext";
 
     if ($T{TEST_CRASHES}) {
-        `echo '$crashcatch' > crashcatch.c`;
-        make("$C{COMPILE_C} -dynamiclib -o libcrashcatch.dylib -x c crashcatch.c");
-        die "$?" if $?;
+        die "test with test_cashes reached to build phase";
     }
 
     my $out_ext = "js";
@@ -758,9 +759,6 @@ sub run_simple {
     }
 
     my $env = "$C{ENV} $T{TEST_ENV}";
-    if ($T{TEST_CRASHES}) {
-        $env .= " DYLD_INSERT_LIBRARIES=libcrashcatch.dylib";
-    }
 
     my $cmd = "env $env node ./$name.js";
     my $output = make("sh -c '$cmd 2>&1' 2>&1");
