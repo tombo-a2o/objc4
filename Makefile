@@ -63,23 +63,19 @@ OBSOLETE_HEADERS= \
 	include/objc/Protocol.h
 HEADERS = $(PUBLIC_HEADERS) $(PRIVATE_HEADERS) $(OBSOLETE_HEADERS)
 DEPS := $(OBJS:.o=.d)
-LIBCLOSURE = libclosure
 
 CC = emcc
 LINK = emar
-CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -I./lib/libclosure-65 -fblocks -fobjc-runtime=macosx
+CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -fblocks -fobjc-runtime=macosx
 
 .SUFFIXES: .mm .m .o
 
-all: $(LIB) libclosure
+all: $(LIB)
 
 $(LIB): $(HEADERS) $(OBJS)
 	llvm-link -o libobjc4.bc $(OBJS)
 	rm -f $@
 	$(LINK) rcs $@ libobjc4.bc
-
-libclosure:
-	cd lib/libclosure-65 && $(MAKE)
 
 clean:
 	rm -f $(LIB) $(HEADERS) $(OBJS) $(DEPS)
@@ -100,10 +96,7 @@ install: $(LIB)
 	mkdir -p $(EMSCRIPTEN)/system/local/include/objc
 	cp $(PUBLIC_HEADERS) $(EMSCRIPTEN)/system/local/include/objc/
 
-install-all: install
-	cd lib/libclosure-65 && $(MAKE) install
-
-.PHONY: all clean libclosure install install-all
+.PHONY: all clean install
 
 include/objc/NSObjCRuntime.h: runtime/NSObjCRuntime.h
 include/objc/NSObject.h: runtime/NSObject.h
