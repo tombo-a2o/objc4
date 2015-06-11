@@ -1072,15 +1072,6 @@ const char *CRSetCrashLogMessage2(const char *msg)
 // TARGET_OS_MAC
 #elif TARGET_OS_EMSCRIPTEN
 #warning "not implemented"
-int pthread_rwlock_unlock(pthread_rwlock_t *rwlock) {
-	return 0;
-}
-int pthread_rwlock_rdlock(pthread_rwlock_t *lock) {
-	return 0;
-}
-int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock) {
-	return 0;
-}
 malloc_zone_t *_objc_internal_zone(void)
 {
     return NULL;
