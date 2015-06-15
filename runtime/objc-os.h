@@ -1143,10 +1143,9 @@ prototype { asm(""); }
 typedef mutex_t spinlock_t;
 #define spinlock_lock(l) mutex_lock(l)
 #define spinlock_unlock(l) mutex_unlock(l)
-#define spinlock_trylock(l) pthread_mutex_trylock(l)
+#define spinlock_trylock(l) mutex_try_lock(l)
 
 #define SPINLOCK_INITIALIZER MUTEX_INITIALIZER
-#define MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 #define require_action_string(cond, dest, act, msg) do { if (!(cond)) { { act; } goto dest; } } while (0)
 #define require_noerr_string(err, dest, msg) do { if (err) goto dest; } while (0)
 #define require_string(cond, dest, msg) do { if (!(cond)) goto dest; } while (0)

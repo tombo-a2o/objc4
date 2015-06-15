@@ -148,11 +148,11 @@ private:
     static uint8_t table_buf[SIDE_TABLE_STRIPE * SIDE_TABLE_SIZE];
 
 public:
-    spinlock_t slock;
+    spinlock_t slock = SPINLOCK_INITIALIZER;
     RefcountMap refcnts;
     weak_table_t weak_table;
 
-    SideTable() //: slock(SPINLOCK_INITIALIZER)
+    SideTable()
     {
         memset(&weak_table, 0, sizeof(weak_table));
     }
