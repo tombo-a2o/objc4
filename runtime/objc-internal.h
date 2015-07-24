@@ -439,15 +439,12 @@ OBJC_EXPORT id objc_allocWithZone(Class cls)
     __OSX_AVAILABLE_STARTING(__MAC_10_9, __IPHONE_7_0);
 
 OBJC_EXPORT id objc_retain(id obj)
-    __asm__("_objc_retain")
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 OBJC_EXPORT void objc_release(id obj)
-    __asm__("_objc_release")
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 OBJC_EXPORT id objc_autorelease(id obj)
-    __asm__("_objc_autorelease")
     __OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0);
 
 // wraps objc_autorelease(obj) in a useful way when used with return values
