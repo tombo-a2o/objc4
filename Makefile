@@ -65,8 +65,9 @@ HEADERS = $(PUBLIC_HEADERS) $(PRIVATE_HEADERS) $(OBSOLETE_HEADERS)
 DEPS := $(OBJS:.o=.d)
 
 CC = emcc
+CXX = em++
 LINK = emar
-CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -fblocks -fobjc-runtime=macosx
+CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -fblocks -Wno-invalid-offsetof
 
 .SUFFIXES: .mm .m .o
 
@@ -83,7 +84,7 @@ clean:
 -include $(DEPS)
 
 .mm.o:
-	$(CC) $(CFLAGS) -MMD -MP -MF $(@:%.o=%.d) -o $@ $<
+	$(CXX) $(CFLAGS) -MMD -MP -MF $(@:%.o=%.d) -o $@ $<
 
 .m.o:
 	$(CC) $(CFLAGS) -MMD -MP -MF $(@:%.o=%.d) -o $@ $<
