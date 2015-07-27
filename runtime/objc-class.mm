@@ -381,20 +381,20 @@ id object_getIvar(id obj, Ivar ivar)
 **********************************************************************/
 static void object_cxxDestructFromClass(id obj, Class cls)
 {
-    void (*dtor)(id);
+    void (*dtor)(id, void*);
 
     // Call cls's dtor first, then superclasses's dtors.
 
     for ( ; cls; cls = cls->superclass) {
         if (!cls->hasCxxDtor()) return;
-        dtor = (void(*)(id))
+        dtor = (void(*)(id, void*))
             lookupMethodInClassAndLoadCache(cls, SEL_cxx_destruct);
-        if (dtor != (void(*)(id))_objc_msgForward_impcache) {
+        if (dtor != (void(*)(id, void*))_objc_msgForward_impcache) {
             if (PrintCxxCtors) {
                 _objc_inform("CXX: calling C++ destructors for class %s",
                              cls->nameForLogging());
             }
-            (*dtor)(obj);
+            (*dtor)(obj, NULL);
         }
     }
 }
