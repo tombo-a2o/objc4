@@ -220,7 +220,6 @@ static inline mask_t cache_next(mask_t i, mask_t mask) {
 
 #elif TARGET_OS_EMSCRIPTEN
 #define mega_barrier()
-#warning "what is mega_barrier for?"
 #else
 #error unknown architecture
 #endif

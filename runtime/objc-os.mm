@@ -1071,7 +1071,6 @@ const char *CRSetCrashLogMessage2(const char *msg)
 
 // TARGET_OS_MAC
 #elif TARGET_OS_EMSCRIPTEN
-#warning "not implemented"
 malloc_zone_t *_objc_internal_zone(void)
 {
     return NULL;

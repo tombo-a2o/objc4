@@ -495,8 +495,7 @@ class AutoreleasePoolPage
 
 #define PAGE_MAX_SIZE  4096
   #define POOL_SENTINEL nil
-    static pthread_key_t const key = AUTORELEASE_POOL_KEY;
-#warning "autorelease_pool_key"
+    static pthread_key_t key;
     static uint8_t const SCRIBBLE = 0xA3;  // 0xA3A3A3A3 after releasing
     static size_t const SIZE =
 #if PROTECT_AUTORELEASEPOOL
@@ -859,6 +858,7 @@ public:
 
     static void init()
     {
+        AutoreleasePoolPage::key = tls_create(AutoreleasePoolPage::tls_dealloc);
 //        int r __unused = pthread_key_init_np(AutoreleasePoolPage::key,
 //                                             AutoreleasePoolPage::tls_dealloc);
 //        assert(r == 0);
@@ -884,7 +884,7 @@ public:
     static void printAll()
     {
         _objc_inform("##############");
-        _objc_inform("AUTORELEASE POOLS for thread %p", pthread_self());
+        _objc_inform("AUTORELEASE POOLS for thread %lu", pthread_self());
 
         AutoreleasePoolPage *page;
         ptrdiff_t objects = 0;
@@ -914,7 +914,7 @@ public:
             }
 
             _objc_inform("POOL HIGHWATER: new high water mark of %u "
-                         "pending autoreleases for thread %p:",
+                         "pending autoreleases for thread %lu:",
                          mark, pthread_self());
 
             void *stack[128];
@@ -929,7 +929,7 @@ public:
 
 #undef POOL_SENTINEL
 };
-
+pthread_key_t AutoreleasePoolPage::key;
 // anonymous namespace
 };
 

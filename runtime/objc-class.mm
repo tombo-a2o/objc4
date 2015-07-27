@@ -959,12 +959,12 @@ _class_createInstancesFromZone(Class cls, size_t extraBytes, void *zone,
     {
         unsigned i;
         num_allocated = 0;
-#warning "No signature of malloc_zone_batch_malloc"
-/*
-            malloc_zone_batch_malloc((malloc_zone_t *)(zone ? zone : malloc_default_zone()),
-                                     size, (void**)results, num_requested);
-*/
-        for (i = 0; i < num_allocated; i++) {
+        for (i = 0; i < num_requested; i++) {
+            results[i] = (id)malloc(size);
+
+            if(!results[i]) break;
+
+            num_allocated++;
             bzero(results[i], size);
         }
     }

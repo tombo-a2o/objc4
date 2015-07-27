@@ -42,8 +42,6 @@
 #   define WORD_BITS 32
 #endif
 
-#warning "remove word_align"
-
 static inline uint32_t word_align(uint32_t x) {
     return (x + WORD_MASK) & ~WORD_MASK;
 }
@@ -297,8 +295,6 @@ StoreReleaseExclusive(uintptr_t *dst, uintptr_t oldvalue, uintptr_t value)
 
 #elif TARGET_OS_EMSCRIPTEN
 
-#warning "not implemented yet"
-
 #   include <stdio.h>
 #   include <stdlib.h>
 #   include <stdint.h>
@@ -366,12 +362,14 @@ extern void _objc_fatal(const char *fmt, ...) __attribute__((noreturn, format (p
 
 
 #if TARGET_OS_EMSCRIPTEN
-#   define SUPPORT_DIRECT_THREAD_KEYS 1
+#   define SUPPORT_DIRECT_THREAD_KEYS 0
+/*
 #   define TLS_DIRECT_KEY        ((tls_key_t)5)
 #   define SYNC_DATA_DIRECT_KEY  ((tls_key_t)6)
 #   define SYNC_COUNT_DIRECT_KEY ((tls_key_t)7)
 #   define AUTORELEASE_POOL_KEY  ((tls_key_t)8)
 #   define AUTORELEASE_POOL_RECLAIM_KEY ((tls_key_t)9)
+*/
 #else
 // Thread keys reserved by libc for our use.
 // Keys [0..4] are used by autozone.
@@ -939,12 +937,6 @@ typedef struct section_64 sectionType;
 extern int secure_open(const char *filename, int flags, uid_t euid);
 
 #elif TARGET_OS_EMSCRIPTEN
-
-#warning "not implemented fully"
-
-#define __unused
-
-#   define SUPPORT_DIRECT_THREAD_KEYS 0
 
 // OSAtomic
 

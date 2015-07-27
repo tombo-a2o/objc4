@@ -481,7 +481,6 @@ const char *class_getImageName(Class cls)
     }
     return NULL;
 #elif TARGET_OS_EMSCRIPTEN
-#warning "null"
     return NULL;
 #else
     return dyld_image_path_containing_address(cls);

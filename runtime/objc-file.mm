@@ -107,20 +107,16 @@ _hasObjcContents(const header_info *hi)
 
 #else
 
-#warning "TODO rewrite native code"
-
 #define GETSECT(name, type, sectname)                                   \
     type *name(const header_info *hi, size_t *outCount)  \
     {                                                                   \
 		unsigned long count = *outCount = EM_ASM_INT_V({					\
-			false && console.log(EMSCRIPTEN_OBJC_METADATA[sectname].length); \
 			return EMSCRIPTEN_OBJC_METADATA[sectname].length;							\
 		}); \
 		if(count == 0) { \
 			return NULL; \
 		} else { \
 			return (type*)EM_ASM_INT_V({ \
-				false && console.log(EMSCRIPTEN_OBJC_METADATA[sectname][0]); \
 				return EMSCRIPTEN_OBJC_METADATA[sectname][0]; \
 			}); \
 		} \
