@@ -42,10 +42,10 @@
 @end
 
 
-typedef uintptr_t spin_lock_t;
-OBJC_EXTERN void _spin_lock(spin_lock_t *lockp);
-OBJC_EXTERN int  _spin_lock_try(spin_lock_t *lockp);
-OBJC_EXTERN void _spin_unlock(spin_lock_t *lockp);
+typedef spinlock_t spin_lock_t;
+#define _spin_lock(lockp) spinlock_lock(lockp)
+#define _spin_lock_try(lockp) spinlock_lock_try(lockp)
+#define _spin_unlock(lockp) spinlock_unlock(lockp)
 
 /* need to consider cache line contention - space locks out XXX */
 
