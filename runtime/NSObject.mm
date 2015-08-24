@@ -1888,35 +1888,76 @@ void arr_init(void)
                 object_getClassName(self), sel_getName(sel), self);
 }
 
++ (BOOL)returnsValue:(SEL)sel {
+    Method m = class_getClassMethod(self, sel);
+    const char *sig = method_getTypeEncoding(m);
+    return sig[0] != 'v';
+}
 
 + (id)performSelector:(SEL)sel {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    return ((id(*)(id, SEL))objc_msgSend)((id)self, sel);
+    if([self returnsValue:sel]) {
+        return ((id(*)(id, SEL))objc_msgSend)((id)self, sel);
+    } else {
+        ((void(*)(id, SEL))objc_msgSend)((id)self, sel);
+        return nil;
+    }
 }
 
 + (id)performSelector:(SEL)sel withObject:(id)obj {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    return ((id(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
+    if([self returnsValue:sel]) {
+        return ((id(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
+    } else {
+        ((void(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
+        return nil;
+    }
 }
 
 + (id)performSelector:(SEL)sel withObject:(id)obj1 withObject:(id)obj2 {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    return ((id(*)(id, SEL, id, id))objc_msgSend)((id)self, sel, obj1, obj2);
+    if([self returnsValue:sel]) {
+        return ((id(*)(id, SEL, id, id))objc_msgSend)((id)self, sel, obj1, obj2);
+    } else {
+        ((void(*)(id, SEL, id, id))objc_msgSend)((id)self, sel, obj1, obj2);
+        return nil;
+    }
+}
+
+- (BOOL)returnsValue:(SEL)sel {
+    Method m = class_getInstanceMethod([self class], sel);
+    const char *sig = method_getTypeEncoding(m);
+    return sig[0] != 'v';
 }
 
 - (id)performSelector:(SEL)sel {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    return ((id(*)(id, SEL))objc_msgSend)(self, sel);
+    if([self returnsValue:sel]) {
+        return ((id(*)(id, SEL))objc_msgSend)((id)self, sel);
+    } else {
+        ((void(*)(id, SEL))objc_msgSend)((id)self, sel);
+        return nil;
+    }
 }
 
 - (id)performSelector:(SEL)sel withObject:(id)obj {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    return ((id(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
+    if([self returnsValue:sel]) {
+        return ((id(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
+    } else {
+        ((void(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
+        return nil;
+    }
 }
 
 - (id)performSelector:(SEL)sel withObject:(id)obj1 withObject:(id)obj2 {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    return ((id(*)(id, SEL, id, id))objc_msgSend)(self, sel, obj1, obj2);
+    if([self returnsValue:sel]) {
+        return ((id(*)(id, SEL, id, id))objc_msgSend)(self, sel, obj1, obj2);
+    } else {
+        ((void(*)(id, SEL, id, id))objc_msgSend)(self, sel, obj1, obj2);
+        return nil;
+    }
 }
 
 
