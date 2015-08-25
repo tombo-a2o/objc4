@@ -1896,7 +1896,7 @@ void arr_init(void)
 
 + (id)performSelector:(SEL)sel {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if([self returnsValue:sel]) {
+    if ([self returnsValue:sel]) {
         return ((id(*)(id, SEL))objc_msgSend)((id)self, sel);
     } else {
         ((void(*)(id, SEL))objc_msgSend)((id)self, sel);
@@ -1906,17 +1906,21 @@ void arr_init(void)
 
 + (id)performSelector:(SEL)sel withObject:(id)obj {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if([self returnsValue:sel]) {
-        return ((id(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
+    if (method_getNumberOfArguments(class_getClassMethod(self, sel)) == 0) {
+        return [self performSelector:sel];
     } else {
-        ((void(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
-        return nil;
+        if ([self returnsValue:sel]) {
+            return ((id(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
+        } else {
+          ((void(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
+          return nil;
+        }
     }
 }
 
 + (id)performSelector:(SEL)sel withObject:(id)obj1 withObject:(id)obj2 {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if([self returnsValue:sel]) {
+    if ([self returnsValue:sel]) {
         return ((id(*)(id, SEL, id, id))objc_msgSend)((id)self, sel, obj1, obj2);
     } else {
         ((void(*)(id, SEL, id, id))objc_msgSend)((id)self, sel, obj1, obj2);
@@ -1942,11 +1946,15 @@ void arr_init(void)
 
 - (id)performSelector:(SEL)sel withObject:(id)obj {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if([self returnsValue:sel]) {
-        return ((id(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
+    if (method_getNumberOfArguments(class_getInstanceMethod(self, sel)) == 0) {
+        return [self performSelector:sel];
     } else {
-        ((void(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
-        return nil;
+        if([self returnsValue:sel]) {
+            return ((id(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
+        } else {
+            ((void(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
+            return nil;
+        }
     }
 }
 
