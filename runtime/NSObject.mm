@@ -1888,83 +1888,104 @@ void arr_init(void)
                 object_getClassName(self), sel_getName(sel), self);
 }
 
-+ (BOOL)returnsValue:(SEL)sel {
-    Method m = class_getClassMethod(self, sel);
+static inline BOOL returnsValue(Method m) {
     const char *sig = method_getTypeEncoding(m);
     return sig[0] != 'v';
 }
 
-+ (id)performSelector:(SEL)sel {
-    if (!sel) [self doesNotRecognizeSelector:sel];
-    if ([self returnsValue:sel]) {
-        return ((id(*)(id, SEL))objc_msgSend)((id)self, sel);
+#define objc_msgSend_vii ((void(*)(id, SEL))objc_msgSend)
+#define objc_msgSend_iii ((id(*)(id, SEL))objc_msgSend)
+#define objc_msgSend_viii ((void(*)(id, SEL, id))objc_msgSend)
+#define objc_msgSend_iiii ((id(*)(id, SEL, id))objc_msgSend)
+#define objc_msgSend_viiii ((void(*)(id, SEL, id, id))objc_msgSend)
+#define objc_msgSend_iiiii ((id(*)(id, SEL, id, id))objc_msgSend)
+
+static inline id objc_msgSend_xii(Method m, id self, SEL sel) {
+    if (returnsValue(m)) {
+        return objc_msgSend_iii((id)self, sel);
     } else {
-        ((void(*)(id, SEL))objc_msgSend)((id)self, sel);
+        objc_msgSend_vii((id)self, sel);
         return nil;
     }
 }
 
+static inline id objc_msgSend_xiii(Method m, id self, SEL sel, id obj) {
+    if (returnsValue(m)) {
+        return objc_msgSend_iiii((id)self, sel, obj);
+    } else {
+        objc_msgSend_viii((id)self, sel, obj);
+        return nil;
+    }
+}
+
+static inline id objc_msgSend_xiiii(Method m, id self, SEL sel, id obj1, id obj2) {
+    if (returnsValue(m)) {
+        return objc_msgSend_iiiii((id)self, sel, obj1, obj2);
+    } else {
+        objc_msgSend_viiii((id)self, sel, obj1, obj2);
+        return nil;
+    }
+}
+
++ (id)performSelector:(SEL)sel {
+    if (!sel) [self doesNotRecognizeSelector:sel];
+
+    Method m = class_getClassMethod(self, sel);
+    return objc_msgSend_xii(m, self, sel);
+}
+
 + (id)performSelector:(SEL)sel withObject:(id)obj {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if (method_getNumberOfArguments(class_getClassMethod(self, sel)) == 0) {
-        return [self performSelector:sel];
+
+    Method m = class_getClassMethod(self, sel);
+    if (method_getNumberOfArguments(m) == 2) {
+        return objc_msgSend_xii(m, self, sel);
     } else {
-        if ([self returnsValue:sel]) {
-            return ((id(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
-        } else {
-          ((void(*)(id, SEL, id))objc_msgSend)((id)self, sel, obj);
-          return nil;
-        }
+        return objc_msgSend_xiii(m, self, sel, obj);
     }
 }
 
 + (id)performSelector:(SEL)sel withObject:(id)obj1 withObject:(id)obj2 {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if ([self returnsValue:sel]) {
-        return ((id(*)(id, SEL, id, id))objc_msgSend)((id)self, sel, obj1, obj2);
-    } else {
-        ((void(*)(id, SEL, id, id))objc_msgSend)((id)self, sel, obj1, obj2);
-        return nil;
-    }
-}
 
-- (BOOL)returnsValue:(SEL)sel {
-    Method m = class_getInstanceMethod([self class], sel);
-    const char *sig = method_getTypeEncoding(m);
-    return sig[0] != 'v';
+    Method m = class_getClassMethod(self, sel);
+    if (method_getNumberOfArguments(m) == 2) {
+        return objc_msgSend_xii(m, self, sel);
+    } else if (method_getNumberOfArguments(m) == 3) {
+        return objc_msgSend_xiii(m, self, sel, obj1);
+    } else {
+        return objc_msgSend_xiiii(m, self, sel, obj1, obj2);
+    }
 }
 
 - (id)performSelector:(SEL)sel {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if([self returnsValue:sel]) {
-        return ((id(*)(id, SEL))objc_msgSend)((id)self, sel);
-    } else {
-        ((void(*)(id, SEL))objc_msgSend)((id)self, sel);
-        return nil;
-    }
+
+    Method m = class_getInstanceMethod([self class], sel);
+    return objc_msgSend_xii(m, self, sel);
 }
 
 - (id)performSelector:(SEL)sel withObject:(id)obj {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if (method_getNumberOfArguments(class_getInstanceMethod(self, sel)) == 0) {
-        return [self performSelector:sel];
+    
+    Method m = class_getInstanceMethod([self class], sel);
+    if (method_getNumberOfArguments(m) == 2) {
+        return objc_msgSend_xii(m, self, sel);
     } else {
-        if([self returnsValue:sel]) {
-            return ((id(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
-        } else {
-            ((void(*)(id, SEL, id))objc_msgSend)(self, sel, obj);
-            return nil;
-        }
+        return objc_msgSend_xiii(m, self, sel, obj);
     }
 }
 
 - (id)performSelector:(SEL)sel withObject:(id)obj1 withObject:(id)obj2 {
     if (!sel) [self doesNotRecognizeSelector:sel];
-    if([self returnsValue:sel]) {
-        return ((id(*)(id, SEL, id, id))objc_msgSend)(self, sel, obj1, obj2);
+    
+    Method m = class_getInstanceMethod([self class], sel);
+    if (method_getNumberOfArguments(m) == 2) {
+        return objc_msgSend_xii(m, self, sel);
+    } else if (method_getNumberOfArguments(m) == 3) {
+        return objc_msgSend_xiii(m, self, sel, obj1);
     } else {
-        ((void(*)(id, SEL, id, id))objc_msgSend)(self, sel, obj1, obj2);
-        return nil;
+        return objc_msgSend_xiiii(m, self, sel, obj1, obj2);
     }
 }
 
