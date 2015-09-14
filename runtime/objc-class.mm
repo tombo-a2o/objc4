@@ -433,7 +433,7 @@ object_cxxConstructFromClass(id obj, Class cls)
 {
     assert(cls->hasCxxCtor());  // required for performance, not correctness
 
-    id (*ctor)(id);
+    id (*ctor)(id,SEL);
     Class supercls;
 
     supercls = cls->superclass;
@@ -445,15 +445,15 @@ object_cxxConstructFromClass(id obj, Class cls)
     }
 
     // Find this class's ctor, if any.
-    ctor = (id(*)(id))lookupMethodInClassAndLoadCache(cls, SEL_cxx_construct);
-    if (ctor == (id(*)(id))_objc_msgForward_impcache) return obj;  // no ctor - ok
+    ctor = (id(*)(id,SEL))lookupMethodInClassAndLoadCache(cls, SEL_cxx_construct);
+    if (ctor == (id(*)(id,SEL))_objc_msgForward_impcache) return obj;  // no ctor - ok
 
     // Call this class's ctor.
     if (PrintCxxCtors) {
         _objc_inform("CXX: calling C++ constructors for class %s",
                      cls->nameForLogging());
     }
-    if ((*ctor)(obj)) return obj;  // ctor called and succeeded - ok
+    if ((*ctor)(obj,SEL_cxx_construct)) return obj;  // ctor called and succeeded - ok
 
     // This class's ctor was called and failed.
     // Call superclasses's dtors to clean up.
