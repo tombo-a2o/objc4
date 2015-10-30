@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2007 Apple Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 /*
@@ -45,7 +45,7 @@ namespace objc_references_support {
             return p1 == p2;
         }
     };
-    
+
     struct DisguisedPointerHash {
         uintptr_t operator()(uintptr_t k) const {
             // borrowed from CFSet.c
@@ -54,7 +54,7 @@ namespace objc_references_support {
             uintptr_t b = 0x686572204B616E65ULL;
 #else
             uintptr_t a = 0x4B616E65UL;
-            uintptr_t b = 0x4B616E65UL; 
+            uintptr_t b = 0x4B616E65UL;
 #endif
             uintptr_t c = 1;
             a += k;
@@ -85,13 +85,13 @@ namespace objc_references_support {
             return c;
         }
     };
-    
+
     struct ObjectPointerLess {
         bool operator()(const void *p1, const void *p2) const {
             return p1 < p2;
         }
     };
-    
+
     struct ObjcPointerHash {
         uintptr_t operator()(void *p) const {
             return DisguisedPointerHash()(uintptr_t(p));
@@ -99,7 +99,7 @@ namespace objc_references_support {
     };
 
     // STL allocator that uses the runtime's internal allocator.
-    
+
     template <typename T> struct ObjcAllocator {
         typedef T                 value_type;
         typedef value_type*       pointer;
@@ -117,7 +117,7 @@ namespace objc_references_support {
         ~ObjcAllocator() {}
 
         pointer address(reference x) const { return &x; }
-        const_pointer address(const_reference x) const { 
+        const_pointer address(const_reference x) const {
             return x;
         }
 
@@ -127,12 +127,12 @@ namespace objc_references_support {
 
         void deallocate(pointer p, size_type) { ::_free_internal(p); }
 
-        size_type max_size() const { 
+        size_type max_size() const {
             return static_cast<size_type>(-1) / sizeof(T);
         }
 
-        void construct(pointer p, const value_type& x) { 
-            new(p) value_type(x); 
+        void construct(pointer p, const value_type& x) {
+            new(p) value_type(x);
         }
 
         void destroy(pointer p) { p->~value_type(); }
@@ -147,11 +147,11 @@ namespace objc_references_support {
         typedef const void *const_pointer;
         template <typename U> struct rebind { typedef ObjcAllocator<U> other; };
     };
-  
+
     typedef uintptr_t disguised_ptr_t;
     inline disguised_ptr_t DISGUISE(id value) { return ~uintptr_t(value); }
     inline id UNDISGUISE(disguised_ptr_t dptr) { return id(~dptr); }
-  
+
     class ObjcAssociation {
         uintptr_t _policy;
         id _value;
@@ -161,7 +161,7 @@ namespace objc_references_support {
 
         uintptr_t policy() const { return _policy; }
         id value() const { return _value; }
-        
+
         bool hasValue() { return _value != nil; }
     };
 
@@ -196,7 +196,7 @@ class AssociationsManager {
 public:
     AssociationsManager()   { spinlock_lock(&_lock); }
     ~AssociationsManager()  { spinlock_unlock(&_lock); }
-    
+
     AssociationsHashMap &associations() {
         if (_map == NULL)
             _map = new AssociationsHashMap();
@@ -209,14 +209,14 @@ AssociationsHashMap *AssociationsManager::_map = NULL;
 
 // expanded policy bits.
 
-enum { 
+enum {
     OBJC_ASSOCIATION_SETTER_ASSIGN      = 0,
     OBJC_ASSOCIATION_SETTER_RETAIN      = 1,
     OBJC_ASSOCIATION_SETTER_COPY        = 3,            // NOTE:  both bits are set, so we can simply test 1 bit in releaseValue below.
-    OBJC_ASSOCIATION_GETTER_READ        = (0 << 8), 
-    OBJC_ASSOCIATION_GETTER_RETAIN      = (1 << 8), 
+    OBJC_ASSOCIATION_GETTER_READ        = (0 << 8),
+    OBJC_ASSOCIATION_GETTER_RETAIN      = (1 << 8),
     OBJC_ASSOCIATION_GETTER_AUTORELEASE = (2 << 8)
-}; 
+};
 
 id _object_get_associative_reference(id object, void *key) {
     id value = nil;
@@ -255,7 +255,7 @@ static id acquireValue(id value, uintptr_t policy) {
 
 static void releaseValue(id value, uintptr_t policy) {
     if (policy & OBJC_ASSOCIATION_SETTER_RETAIN) {
-        ((id(*)(id, SEL))objc_msgSend)(value, SEL_release);
+        ((void(*)(id, SEL))objc_msgSend)(value, SEL_release);
     }
 }
 
