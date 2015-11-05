@@ -1,41 +1,45 @@
-LIB := libobjc4.a
-OBJS := \
-	runtime/hashtable2.o \
-	runtime/maptable.o \
-	runtime/objc-auto.o \
-	runtime/objc-cache.o \
-	runtime/objc-empty-vtable.o \
-	runtime/objc-class-old.o \
-	runtime/objc-class.o \
-	runtime/objc-errors.o \
-	runtime/objc-exception.o \
-	runtime/objc-file.o \
-	runtime/objc-initialize.o \
-	runtime/objc-layout.o \
-	runtime/objc-load.o \
-	runtime/objc-loadmethod.o \
-	runtime/objc-lockdebug.o \
-	runtime/objc-runtime-new.o \
-	runtime/objc-runtime-old.o \
-	runtime/objc-runtime.o \
-	runtime/objc-sel-set.o \
-	runtime/objc-sel.o \
-	runtime/objc-sync.o \
-	runtime/objc-typeencoding.o \
-	runtime/Object.o \
-	runtime/Protocol.o \
-	runtime/OldClasses.subproj/List.o \
-	runtime/Accessors.subproj/objc-accessors.o \
-	runtime/objc-references.o \
-	runtime/objc-os.o \
-	runtime/objc-auto-dump.o \
-	runtime/objc-file-old.o \
-	runtime/objc-externalref.o \
-	runtime/objc-weak.o \
-	runtime/NSObject.o \
-	runtime/objc-opt.o \
-	runtime/objc-cache-old.o \
-	runtime/objc-sel-old.o
+BUILD ?= build
+LIB = $(BUILD)/libobjc4.a
+SOURCES := $(addprefix runtime/, \
+	hashtable2.mm \
+	maptable.mm \
+	objc-auto.mm \
+	objc-cache.mm \
+	objc-empty-vtable.m \
+	objc-class-old.mm \
+	objc-class.mm \
+	objc-errors.mm \
+	objc-exception.mm \
+	objc-file.mm \
+	objc-initialize.mm \
+	objc-layout.mm \
+	objc-load.mm \
+	objc-loadmethod.mm \
+	objc-lockdebug.mm \
+	objc-runtime-new.mm \
+	objc-runtime-old.mm \
+	objc-runtime.mm \
+	objc-sel-set.mm \
+	objc-sel.mm \
+	objc-sync.mm \
+	objc-typeencoding.mm \
+	Object.mm \
+	Protocol.mm \
+	OldClasses.subproj/List.m \
+	Accessors.subproj/objc-accessors.mm \
+	objc-references.mm \
+	objc-os.mm \
+	objc-auto-dump.mm \
+	objc-file-old.mm \
+	objc-externalref.mm \
+	objc-weak.mm \
+	NSObject.mm \
+	objc-opt.mm \
+	objc-cache-old.mm \
+	objc-sel-old.mm \
+)
+OBJS = $(patsubst runtime/%, $(BUILD)/%, $(patsubst %.m, %.o, $(patsubst %.mm, %.o, $(SOURCES))))
+
 PUBLIC_HEADERS = \
 	include/objc/NSObjCRuntime.h \
 	include/objc/NSObject.h \
@@ -83,10 +87,12 @@ clean:
 
 -include $(DEPS)
 
-.mm.o:
+$(BUILD)/%.o: runtime/%.mm $(HEADERS)
+	@mkdir -p $(@D)
 	$(CXX) $(CFLAGS) -MMD -MP -MF $(@:%.o=%.d) -o $@ $<
 
-.m.o:
+$(BUILD)/%.o: runtime/%.m $(HEADERS)
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -MP -MF $(@:%.o=%.d) -o $@ $<
 
 include/objc/%.h: runtime/%.h
