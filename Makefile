@@ -71,7 +71,7 @@ DEPS := $(OBJS:.o=.d)
 CC = emcc
 CXX = em++
 LINK = emar
-CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -fblocks -Wno-invalid-offsetof
+CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -fblocks -Wno-invalid-offsetof $(OPT_CFLAGS)
 
 .SUFFIXES: .mm .m .o
 
