@@ -40,6 +40,7 @@
 #include <Block.h>
 #include <map>
 //#include <execinfo.h>
+#include <emscripten/trace.h>
 
 @interface NSInvocation
 - (SEL)selector;
@@ -2045,7 +2046,9 @@ static inline id objc_msgSend_xiiii(Method m, id self, SEL sel, id obj1, id obj2
 
 
 + (id)new {
-    return [callAlloc(self, false/*checkNil*/) init];
+    id obj = callAlloc(self, false/*checkNil*/);
+    emscripten_trace_annotate_address_type(obj, class_getName(self));
+    return [obj init];
 }
 
 + (id)retain {
@@ -2117,12 +2120,16 @@ static inline id objc_msgSend_xiiii(Method m, id self, SEL sel, id obj1, id obj2
 }
 
 + (id)alloc {
-    return _objc_rootAlloc(self);
+    id obj = _objc_rootAlloc(self);
+    emscripten_trace_annotate_address_type(obj, class_getName(self));
+    return obj;
 }
 
 // Replaced by ObjectAlloc
 + (id)allocWithZone:(struct _NSZone *)zone {
-    return _objc_rootAllocWithZone(self, (malloc_zone_t *)zone);
+    id obj = _objc_rootAllocWithZone(self, (malloc_zone_t *)zone);
+    emscripten_trace_annotate_address_type(obj, class_getName(self));
+    return obj;
 }
 
 // Replaced by CF (throws an NSException)

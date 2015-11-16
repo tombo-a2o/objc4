@@ -1350,12 +1350,17 @@ bool crashlog_header_name_string(const char *name)
     return true;
 }
 
+#include <emscripten/trace.h>
+
 __attribute__((constructor))
 void _objc_init(void)
 {
     static bool initialized = false;
     if (initialized) return;
     initialized = true;
+
+    emscripten_trace_configure("http://127.0.0.1:5000/", "Objective-C application");
+    emscripten_trace_enter_context("objc_init");
 
     // fixme defer initialization until an objc-using image is found?
     environ_init();
@@ -1366,6 +1371,8 @@ void _objc_init(void)
     // Register for unmap first, in case some +load unmaps something
     map_images();
     load_images();
+
+    emscripten_trace_exit_context();
 }
 
 #else
