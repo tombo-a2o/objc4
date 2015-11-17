@@ -1,4 +1,4 @@
-BUILD ?= build
+BUILD ?= build/debug
 LIB = $(BUILD)/libobjc4.a
 SOURCES := $(addprefix runtime/, \
 	hashtable2.mm \
@@ -71,7 +71,7 @@ DEPS := $(OBJS:.o=.d)
 CC = emcc
 CXX = em++
 LINK = emar
-CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -fblocks -Wno-invalid-offsetof $(OPT_CFLAGS)
+CFLAGS = -I./include -I./runtime -I./runtime/Accessors.subproj -fblocks -Wno-invalid-offsetof $(OPT_CFLAGS) --tracing
 
 .SUFFIXES: .mm .m .o
 
