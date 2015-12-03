@@ -145,7 +145,7 @@ struct objc_cache {
 struct objc_cache _objc_empty_cache = {NULL, NULL};
 //IMP _objc_empty_vtable = NULL;
 
-#if __arm__
+#if __arm__ || TARGET_OS_EMSCRIPTEN
 // objc_msgSend has few registers available.
 // Cache scan increments and wraps at special end-marking bucket.
 #define CACHE_END_MARKER 1
@@ -153,7 +153,7 @@ static inline mask_t cache_next(mask_t i, mask_t mask) {
     return (i+1) & mask;
 }
 
-#elif __i386__  ||  __x86_64__  ||  __arm64__ || TARGET_OS_EMSCRIPTEN
+#elif __i386__  ||  __x86_64__  ||  __arm64__
 // objc_msgSend has lots of registers and/or memory operands available.
 // Cache scan decrements. No end marker needed.
 #define CACHE_END_MARKER 0
@@ -377,7 +377,7 @@ bucket_t *allocateBuckets(mask_t newCapacity)
 
     bucket_t *end = cache_t::endMarker(newBuckets, newCapacity);
 
-#if __arm__
+#if __arm__ || TARGET_OS_EMSCRIPTEN
     // End marker's key is 1 and imp points BEFORE the first bucket.
     // This saves an instruction in objc_msgSend.
     end->setKey((cache_key_t)(uintptr_t)1);
