@@ -463,7 +463,8 @@ extern bool logMessageSend(bool isClassMethod,
 extern IMP _class_lookupMethodAndLoadCache3(id, SEL, Class);
 
 #if !OBJC_OLD_DISPATCH_PROTOTYPES
-extern void _objc_msgForward_impcache(void);
+#define _objc_msgForward_impcache ((IMP)2)
+//extern void _objc_msgForward_impcache(void);
 extern void _objc_ignored_method(void);
 extern void _objc_msgSend_uncached_impcache(void);
 #else
