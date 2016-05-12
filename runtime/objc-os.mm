@@ -1232,9 +1232,9 @@ map_images_nolock()
 
             // Size some data structures based on main executable's size
             size_t count;
-            _getObjc2SelectorRefs(hi, &count);
+            count = _getObjc2SelectorRefCount();
             selrefCount += count;
-            _getObjc2MessageRefs(hi, &count);
+            count = _getObjc2MessageRefCount();
             selrefCount += count;
         }
 
