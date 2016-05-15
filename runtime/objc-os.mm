@@ -1370,9 +1370,13 @@ void _objc_init(void)
 
     // Register for unmap first, in case some +load unmaps something
     map_images();
-    load_images();
 
     emscripten_trace_exit_context();
+}
+
+extern "C" void _objc_load_images(void)
+{
+    load_images();
 }
 
 #else
