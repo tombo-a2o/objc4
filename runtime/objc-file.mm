@@ -105,36 +105,6 @@ _hasObjcContents(const header_info *hi)
     return NO;
 }
 
-#else
-
-#define GETSECT(name, type, sectname)                                   \
-    type *name(const header_info *hi, size_t *outCount)  \
-    {                                                                   \
-		unsigned long count = *outCount = EM_ASM_INT_V({					\
-			return EMSCRIPTEN_OBJC_METADATA[sectname].length;							\
-		}); \
-		if(count == 0) { \
-			return NULL; \
-		} else { \
-			return (type*)EM_ASM_INT_V({ \
-				return EMSCRIPTEN_OBJC_METADATA[sectname][0]; \
-			}); \
-		} \
-    }
-
-
-//      function name                 content type     section name
-GETSECT(_getObjc2SelectorRefs,        SEL,             "__objc_selrefs");
-GETSECT(_getObjc2MessageRefs,         message_ref_t,   "__objc_msgrefs");
-GETSECT(_getObjc2ClassRefs,           Class,       "__objc_classrefs");
-GETSECT(_getObjc2SuperRefs,           Class,       "__objc_superrefs");
-GETSECT(_getObjc2ClassList,           classref_t,       "__objc_classlist");
-GETSECT(_getObjc2NonlazyClassList,    classref_t,       "__objc_nlclslist");
-GETSECT(_getObjc2CategoryList,        category_t *,    "__objc_catlist");
-GETSECT(_getObjc2NonlazyCategoryList, category_t *,    "__objc_nlcatlist");
-GETSECT(_getObjc2ProtocolList,        protocol_t *,    "__objc_protolist");
-GETSECT(_getObjc2ProtocolRefs,        protocol_t *,    "__objc_protorefs");
-
 #endif
 
 #endif
