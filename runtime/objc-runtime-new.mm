@@ -61,6 +61,7 @@ static void fixupMessageRef(message_ref_t *msg);
 static bool MetaclassNSObjectAWZSwizzled;
 static bool ClassNSObjectRRSwizzled;
 
+intptr_t _objc_msgForward_impcache = 0;
 
 id objc_noop_imp(id self, SEL _cmd __unused) {
     return self;
@@ -5111,7 +5112,7 @@ IMP lookUpImpOrNil(Class cls, SEL sel, id inst,
                    bool initialize, bool cache, bool resolver)
 {
     IMP imp = lookUpImpOrForward(cls, sel, inst, initialize, cache, resolver);
-    if (imp == _objc_msgForward_impcache) return nil;
+    if (imp == (IMP)_objc_msgForward_impcache) return nil;
     else return imp;
 }
 
@@ -5147,9 +5148,9 @@ IMP lookupMethodInClassAndLoadCache(Class cls, SEL sel)
         return meth->imp;
     } else {
         // Miss in method list. Cache objc_msgForward.
-        cache_fill(cls, sel, _objc_msgForward_impcache);
+        cache_fill(cls, sel, (IMP)_objc_msgForward_impcache);
         rwlock_unlock_read(&runtimeLock);
-        return _objc_msgForward_impcache;
+        return (IMP)_objc_msgForward_impcache;
     }
 }
 
