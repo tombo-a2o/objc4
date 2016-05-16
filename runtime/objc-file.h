@@ -31,6 +31,31 @@
 
 __BEGIN_DECLS
 
+#ifdef EMSCRIPTEN
+
+extern SEL *_getObjc2SelectorRef(size_t idx);
+extern message_ref_t *_getObjc2MessageRef(size_t idx);
+extern Class *_getObjc2ClassRef(size_t idx);
+extern Class *_getObjc2SuperRef(size_t idx);
+extern classref_t *_getObjc2Class(size_t idx);
+extern classref_t *_getObjc2NonlazyClass(size_t idx);
+extern category_t **_getObjc2Category(size_t idx);
+extern category_t **_getObjc2NonlazyCategory(size_t idx);
+extern protocol_t **_getObjc2Protocol(size_t idx);
+extern protocol_t **_getObjc2ProtocolRef(size_t idx);
+
+extern size_t _getObjc2SelectorRefCount();
+extern size_t _getObjc2MessageRefCount();
+extern size_t _getObjc2ClassRefCount();
+extern size_t _getObjc2SuperRefCount();
+extern size_t _getObjc2ClassCount();
+extern size_t _getObjc2NonlazyClassCount();
+extern size_t _getObjc2CategoryCount();
+extern size_t _getObjc2NonlazyCategoryCount();
+extern size_t _getObjc2ProtocolCount();
+extern size_t _getObjc2ProtocolRefCount();
+
+#else
 // classref_t is not fixed up at launch; use remapClass() to convert
 
 extern SEL *_getObjc2SelectorRefs(const header_info *hi, size_t *count);
@@ -43,6 +68,8 @@ extern category_t **_getObjc2CategoryList(const header_info *hi, size_t *count);
 extern category_t **_getObjc2NonlazyCategoryList(const header_info *hi, size_t *count);
 extern protocol_t **_getObjc2ProtocolList(const header_info *hi, size_t *count);
 extern protocol_t **_getObjc2ProtocolRefs(const header_info *hi, size_t *count);
+
+#endif
 
 __END_DECLS
 

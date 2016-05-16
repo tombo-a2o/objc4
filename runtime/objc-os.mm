@@ -1232,9 +1232,9 @@ map_images_nolock()
 
             // Size some data structures based on main executable's size
             size_t count;
-            _getObjc2SelectorRefs(hi, &count);
+            count = _getObjc2SelectorRefCount();
             selrefCount += count;
-            _getObjc2MessageRefs(hi, &count);
+            count = _getObjc2MessageRefCount();
             selrefCount += count;
         }
 
@@ -1370,9 +1370,13 @@ void _objc_init(void)
 
     // Register for unmap first, in case some +load unmaps something
     map_images();
-    load_images();
 
     emscripten_trace_exit_context();
+}
+
+extern "C" void _objc_load_images(void)
+{
+    load_images();
 }
 
 #else
