@@ -61,7 +61,7 @@ static void fixupMessageRef(message_ref_t *msg);
 static bool MetaclassNSObjectAWZSwizzled;
 static bool ClassNSObjectRRSwizzled;
 
-intptr_t _objc_msgForward_impcache = 0;
+// intptr_t _objc_msgForward_impcache = 0;
 
 id objc_noop_imp(id self, SEL _cmd __unused) {
     return self;
