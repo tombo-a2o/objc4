@@ -320,6 +320,8 @@ struct objc_exception {
 
 static void _objc_exception_noop(void) { }
 static bool _objc_exception_false(void) { return 0; }
+static void _objc_exception_search_above_dst_noop(void *p0, void *p1, void* p2, void* p3, int i0, bool b0) { }
+static void _objc_exception_search_below_dst_noop(void *p0, void *p1, void* p2, int i0, bool b0) { }
 // static bool _objc_exception_true(void) { return 1; }
 static void _objc_exception_abort1(void) {
     _objc_fatal("unexpected call into objc exception typeinfo vtable %d", 1);
@@ -336,8 +338,7 @@ static void _objc_exception_abort4(void) {
 
 static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo,
                                      struct objc_typeinfo *throw_tinfo,
-                                     void **throw_obj_p,
-                                     unsigned outer);
+                                     void **throw_obj_p);
 
 // forward declaration
 OBJC_EXPORT struct objc_typeinfo OBJC_EHTYPE_id;
@@ -351,8 +352,8 @@ const void *objc_ehtype_vtable[] = {
     (void*)_objc_exception_false,     // OLD __is_pointer_p
     (void*)_objc_exception_false,     // OLD __is_function_p
     (void*)_objc_exception_do_catch,  // OLD __do_catch,  NEW can_catch
-    (void*)_objc_exception_false,     // OLD __do_upcast, NEW search_above_dst
-    (void*)_objc_exception_false,     //                  NEW search_below_dst
+    (void*)_objc_exception_search_above_dst_noop,     // OLD __do_upcast, NEW search_above_dst
+    (void*)_objc_exception_search_below_dst_noop,     //                  NEW search_below_dst
     (void*)_objc_exception_abort1,    // paranoia: blow up if libc++abi
     (void*)_objc_exception_abort2,    //           adds something new
     (void*)_objc_exception_abort3,
@@ -582,8 +583,8 @@ void objc_exception_rethrow(void)
 id objc_begin_catch(void *exc_gen)
 {
     if (PrintExceptions) {
-        _objc_inform("EXCEPTIONS: handling exception %p at %p",
-                     exc_gen, __builtin_return_address(0));
+        _objc_inform("EXCEPTIONS: handling exception %p",
+                     exc_gen);
     }
     // NOT actually an id in the catch(...) case!
     return (id)__cxa_begin_catch(exc_gen);
@@ -602,8 +603,7 @@ void objc_end_catch(void)
 // `outer` is not passed by the new libcxxabi
 static bool _objc_exception_do_catch(struct objc_typeinfo *catch_tinfo,
                                      struct objc_typeinfo *throw_tinfo,
-                                     void **throw_obj_p,
-                                     unsigned outer UNAVAILABLE_ATTRIBUTE)
+                                     void **throw_obj_p)
 {
     id exception;
 
