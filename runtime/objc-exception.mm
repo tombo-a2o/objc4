@@ -472,11 +472,11 @@ __objc_personality_v0(int version,
                       (actions & _UA_FORCE_UNWIND));
 
     if (PrintExceptions) {
-        _objc_inform("EXCEPTIONS: %s through frame [ip=%p sp=%p] "
-                     "for exception %p",
-                     unwinding ? "unwinding" : "searching",
-                     (void*)(_Unwind_GetIP(context)-1),
-                     (void*)_Unwind_GetCFA(context), exceptionObject);
+        // _objc_inform("EXCEPTIONS: %s through frame [ip=%p sp=%p] "
+        //              "for exception %p",
+        //              unwinding ? "unwinding" : "searching",
+        //              (void*)(_Unwind_GetIP(context)-1),
+        //              (void*)_Unwind_GetCFA(context), exceptionObject);
     }
 
     // If we're executing the unwind, call this frame's alt handlers, if any.
