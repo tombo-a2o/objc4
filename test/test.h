@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2014-2017 Tombo Inc. All Rights Reserved.
+ *
+ * This source code is a modified version of the objc4 sources released by Apple Inc. under
+ * the terms of the APSL version 2.0 (see below).
+ *
+ */
+
 // test.h 
 // Common definitions for trivial test harness
 

@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2014-2017 Tombo Inc. All Rights Reserved.
+ *
+ * This source code is a modified version of the objc4 sources released by Apple Inc. under
+ * the terms of the APSL version 2.0 (see below).
+ *
+ */
+
 // TEST_CFLAGS -framework Foundation -framework CoreFoundation -Wno-deprecated-declarations
 // need Foundation to get NSObject compatibility additions for class Protocol
 // because ARC calls [protocol retain]
