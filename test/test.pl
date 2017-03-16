@@ -266,9 +266,6 @@ sub check_output {
 
     my %T = %{$C{"TEST_$name"}};
 
-    # node.js emits an extra newline
-    pop @output;
-
     # Quietly strip MallocScribble before saving the "original" output
     # because it is distracting.
     filter_malloc(\@output);
@@ -770,7 +767,7 @@ sub run_simple {
 
 
 sub find_compiler {
-    my $result = `which emcc`;
+    my $result = `which a2o`;
     chomp $result;
     return $result;
 }
@@ -799,8 +796,9 @@ sub make_one_config {
     $C{SWIFT} = find_compiler
 
     # Populate cflags
-    my $cflags = "--valid-abspath $DIR/../include -I $DIR/../include -fblocks -fobjc-runtime=macosx -s ASSERTIONS=0 -s DEMANGLE_SUPPORT=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 ";
-    my $objcflags = "$DIR/../libobjc4.a $DIR/../lib/libclosure-65/libclosure.a -D'__weak=__attribute__((objc_gc(weak)))' -D'__strong='";
+    my $cflags = "--valid-abspath $DIR/../include -I $DIR/../include";
+    #my $objcflags = "-D'__weak=__attribute__((objc_gc(weak)))' -D'__strong='";
+    my $objcflags = "-framework Foundation -framework CoreFoundation -framework CFNetwork -licuuc -licui18n -licudata -Wno-objc-macro-redefinition";
     my $swiftflags = "-g ";
 
     # Populate ENV_PREFIX
