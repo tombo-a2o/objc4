@@ -1142,7 +1142,12 @@ IMP cache_getImp(Class cls, SEL sel)
   uintptr_t key;
   for(bucket += index; (key = bucket->key()) != 0; bucket++) {
     if(key == (uintptr_t)sel) {
-      return bucket->imp();
+      IMP imp = bucket->imp();
+      if(imp == _objc_msgSend_uncached_impcache) {
+        return NULL;
+      } else {
+        return imp;
+      }
     } else if(key == 1) {
       // cache wrap
       bucket = (struct bucket_t *)(bucket->imp());
