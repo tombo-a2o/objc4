@@ -1360,7 +1360,8 @@ bool crashlog_header_name_string(const char *name)
 
 #include <emscripten/trace.h>
 
-extern "C" void _objc_init(void)
+__attribute__((constructor))
+void _objc_init(void)
 {
     static bool initialized = false;
     if (initialized) return;
