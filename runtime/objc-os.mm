@@ -1360,7 +1360,7 @@ bool crashlog_header_name_string(const char *name)
 
 #include <emscripten/trace.h>
 
-__attribute__((constructor))
+__attribute__((constructor(1000)))
 void _objc_init(void)
 {
     static bool initialized = false;
@@ -1382,6 +1382,7 @@ void _objc_init(void)
     emscripten_trace_exit_context();
 }
 
+__attribute__((constructor(1100)))
 extern "C" void _objc_load_images(void)
 {
     load_images();
