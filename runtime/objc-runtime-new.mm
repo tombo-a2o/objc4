@@ -69,7 +69,7 @@ static void fixupMessageRef(message_ref_t *msg);
 static bool MetaclassNSObjectAWZSwizzled;
 static bool ClassNSObjectRRSwizzled;
 
-// intptr_t _objc_msgForward_impcache = 0;
+intptr_t _objc_msgForward_impcache = -1;
 
 id objc_noop_imp(id self, SEL _cmd __unused) {
     return self;
@@ -2152,7 +2152,7 @@ static Class realizeClass(Class cls)
 	/*
 	printf("realizing class %s %d %s\n", ro->name, cls, isMeta ? "META" : "");
 	int32_t *p = (int32_t*)cls;
-	int16_t *p2 = (int16_t*)cls; 
+	int16_t *p2 = (int16_t*)cls;
 	printf("%08x %d\n", p[0], p[0]);
 	printf("%08x %d\n", p[1], p[1]);
 	printf("%08x %d\n", p[2], p[2]);
