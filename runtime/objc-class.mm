@@ -487,8 +487,7 @@ static void _class_resolveClassMethod(Class cls, SEL sel, id inst)
         return;
     }
 
-    BOOL (*msg)(Class, SEL, SEL) = (BOOL (*)(Class, SEL, SEL))objc_msgSend;
-    BOOL resolved = msg(_class_getNonMetaClass(cls, inst),
+    BOOL resolved = ((BOOL(*)(Class, SEL, SEL))objc_msgSend)(_class_getNonMetaClass(cls, inst),
                         SEL_resolveClassMethod, sel);
 
     // Cache the result (good or bad) so the resolver doesn't fire next time.
@@ -530,8 +529,7 @@ static void _class_resolveInstanceMethod(Class cls, SEL sel, id inst)
         return;
     }
 
-    BOOL (*msg)(Class, SEL, SEL) = (BOOL (*)(Class, SEL, SEL))objc_msgSend;
-    BOOL resolved = msg(cls, SEL_resolveInstanceMethod, sel);
+    BOOL resolved = ((BOOL(*)(Class, SEL, SEL))objc_msgSend)(cls, SEL_resolveInstanceMethod, sel);
 
     // Cache the result (good or bad) so the resolver doesn't fire next time.
     // +resolveInstanceMethod adds to self a.k.a. cls
