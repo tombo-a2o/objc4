@@ -1,0 +1,7 @@
+module ObjectiveC {
+  umbrella "."
+  export *
+  module * {
+    export *
+  }
+}

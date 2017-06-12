@@ -41,6 +41,7 @@ SOURCES := $(addprefix runtime/, \
 OBJS = $(patsubst runtime/%, $(BUILD)/%, $(patsubst %.m, %.o, $(patsubst %.mm, %.o, $(SOURCES))))
 
 PUBLIC_HEADERS = \
+	include/objc/module.modulemap \
 	include/objc/NSObjCRuntime.h \
 	include/objc/NSObject.h \
 	include/objc/message.h \
@@ -105,6 +106,8 @@ install: $(LIB)
 
 .PHONY: all clean install
 
+include/objc/module.modulemap: module.modulemap
+	cp $< $@
 include/objc/NSObjCRuntime.h: runtime/NSObjCRuntime.h
 include/objc/NSObject.h: runtime/NSObject.h
 include/objc/message.h: runtime/message.h
