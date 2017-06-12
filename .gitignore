@@ -3,5 +3,5 @@ libobjc4.bc
 .*.swp
 *.d
 *.o
-include/objc/*.h
+include/objc/*
 xcuserdata
