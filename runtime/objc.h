@@ -43,8 +43,6 @@
 
 #ifdef EMSCRIPTEN
 
-#include <emscripten.h>
-
 /// FIXME: I think we should move these macros to somewhere system headers are.
 #define __unused __attribute__((unused))
 #ifdef __cplusplus
