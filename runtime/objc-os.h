@@ -59,7 +59,7 @@ static inline size_t word_align(size_t x) {
 }
 */
 
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && !TARGET_OS_EMSCRIPTEN
 
 #   ifndef __STDC_LIMIT_MACROS
 #       define __STDC_LIMIT_MACROS
@@ -653,7 +653,7 @@ OBJC_EXTERN IMAGE_DOS_HEADER __ImageBase;
 // Prototypes
 
 
-#elif TARGET_OS_MAC
+#elif TARGET_OS_MAC && !TARGET_OS_EMSCRIPTEN
 
 
 // OS headers

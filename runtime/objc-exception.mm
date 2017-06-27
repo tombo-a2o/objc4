@@ -704,7 +704,7 @@ void objc_terminate(void)
 * alt handler support - zerocost implementation only
 **********************************************************************/
 
-#if !SUPPORT_ALT_HANDLERS || TARGET_OS_EMSCRIPTEN
+#if !SUPPORT_ALT_HANDLERS
 
 void _destroyAltHandlerList(struct alt_handler_list *list)
 {

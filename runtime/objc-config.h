@@ -36,7 +36,7 @@
 
 // Define SUPPORT_GC=1 to enable garbage collection.
 // Be sure to edit OBJC_NO_GC in objc-auto.h as well.
-#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32 || TARGET_OS_EMSCRIPTEN
+#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32
 #   define SUPPORT_GC 0
 #else
 #   define SUPPORT_GC 1

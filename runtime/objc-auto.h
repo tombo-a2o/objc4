@@ -53,8 +53,6 @@
 #   define BOOL WINBOOL
 #   include <windows.h>
 #   undef BOOL
-#elif TARGET_OS_EMSCRIPTEN
-#include <libkern/OSAtomic.h>
 #else
 #error "unkonwo"
 #endif
@@ -62,7 +60,7 @@
 
 /* GC is unsupported on some architectures. */
 
-#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32 || TARGET_OS_EMSCRIPTEN
+#if TARGET_OS_EMBEDDED  ||  TARGET_OS_IPHONE  ||  TARGET_OS_WIN32
 #   define OBJC_NO_GC 1
 #endif
 

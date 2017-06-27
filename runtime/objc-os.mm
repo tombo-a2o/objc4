@@ -198,7 +198,7 @@ bool crashlog_header_name(header_info *hi)
 
 
 // TARGET_OS_WIN32
-#elif TARGET_OS_MAC
+#elif TARGET_OS_MAC && !TARGET_OS_EMSCRIPTEN
 
 #include "objc-file-old.h"
 #include "objc-file.h"
@@ -1055,7 +1055,7 @@ bool crashlog_header_name_string(const char *name)
 }
 
 
-#if TARGET_OS_IPHONE
+#if TARGET_OS_IPHONE && !TARGET_OS_EMSCRIPTEN
 
 const char *__crashreporter_info__ = NULL;
 
